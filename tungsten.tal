@@ -1,0 +1,172 @@
+%CONSOLE.WRITE { #18 }
+%SYSTEM.RED    { #08 }
+%SYSTEM.GREEN  { #0a }
+%SYSTEM.BLUE   { #0c }
+%SCREEN.VECTOR { #20 }
+%SCREEN.WIDTH  { #22 }
+%SCREEN.HEIGHT { #24 }
+%SCREEN.X      { #28 }
+%SCREEN.Y      { #2a }
+%SCREEN.ADDR   { #2c }
+%SCREEN.PIXEL  { #2e }
+%SCREEN.SPRITE { #2f }
+
+%MOD    { DIVk MUL SUB }
+%MOD2   { DIV2k MUL2 SUB2 }
+%DEC    { #01 SUB }
+%DEC2   { #0001 SUB2 }
+%CALL   { JSR2 }
+%RETURN { JMP2r }
+%GET_X  { SCREEN.X DEI2 }
+%GET_Y  { SCREEN.Y DEI2 }
+%SET_X  { SCREEN.X DEO2 }
+%SET_Y  { SCREEN.Y DEO2 }
+%PIXEL  { SCREEN.PIXEL DEO }
+%HALF2  { #01 SFT2 }
+
+%>center_x { #00 STZ2 }
+%>center_y { #02 STZ2 }
+%!center_x { #00 LDZ2 }
+%!center_y { #02 LDZ2 }
+
+( --------------------------------------- )
+(         M A I N   P R O G R A M         )
+
+|0100 ( main program )
+#0f2b SYSTEM.RED   DEO2
+#1e8a SYSTEM.GREEN DEO2
+#2a4d SYSTEM.BLUE  DEO2
+
+SCREEN.WIDTH DEI2 HALF2 >center_x
+SCREEN.HEIGHT DEI2 HALF2 >center_y
+
+
+!center_x #0040 SUB2 SET_X
+!center_y #0030 SUB2 SET_Y
+#01 #0080 #0060 ;draw_filled_rect CALL
+
+!center_x #0041 SUB2 SET_X
+!center_y #0031 SUB2 SET_Y
+#02 #0082 #0062 ;draw_rect CALL
+!center_x #0043 SUB2 SET_X
+!center_y #0033 SUB2 SET_Y
+#02 #0086 #0066 ;draw_rect CALL
+
+
+!center_x #0032 SUB2 SET_X
+!center_y #0008 ADD2 SET_Y
+#02 ;draw_button CALL
+GET_Y #000c ADD2 SET_Y
+#02 ;draw_button CALL
+
+
+( #02 #0064 #000a ;draw_rect CALL )
+BRK
+
+
+
+
+
+
+
+@draw_rect ( colour width* height* -- )
+  GET_Y DUP2 ,&start_y STR2                  ( colour width* height* y* )
+  ADD2 DEC2 ,&target_y STR2                  ( colour width* )
+  STH2 DUP ,&colour STR STH2r                ( colour width* )
+  DUP2 ,&width STR2                          ( colour width* )
+  ;draw_horizontal_line CALL                 ( // draw the top line )
+  GET_Y INC2 SET_Y                           ( -- )
+  ,&colour LDR                               ( colour )
+  &loop
+    DUP PIXEL                                ( // draw the left wall )
+    GET_X ,&width LDR2 ADD2 DEC2 SET_X       ( colour )
+    DUP PIXEL                                ( // draw the right wall )
+    GET_X ,&width LDR2 SUB2 INC2 SET_X       ( colour )
+    GET_Y INC2 DUP2 SET_Y                    ( y* )
+    [ LIT2 &target_y $2 ]                    ( y* target_y* )
+    NEQ2 ,&loop JCN                          ( -- )
+  ,&width LDR2 ;draw_horizontal_line CALL    ( // draw the bottom line )
+  [ LIT2 &start_y $2 ] SET_Y
+  RETURN
+  &colour $1
+  &width $2
+
+
+@draw_horizontal_line ( colour width* -- )
+  SCREEN.X ,__draw_line/mode STR
+  ,__draw_line JSR RETURN
+@draw_vertical_line ( colour height* -- )
+  SCREEN.Y ,__draw_line/mode STR
+  ,__draw_line JSR RETURN
+@__draw_line ( colour length* -- )
+  ROT DUP SWP2                               ( colour* length* )
+  [ ,&mode LDR ] DEI2 DUP2 ,&start STR2      ( colour* length* coord* )
+  DUP2 ROT2 ADD2 SWP2                        ( colour* target* start* )
+  &loop
+    ROT2 DUP PIXEL ROT2 ROT2                 ( // draw a pixel )
+    INC2 DUP2 [ ,&mode LDR ] DEO2            ( colour* target* coord* )
+    NEQ2k ,&loop JCN                         ( colour* target* coord* )
+  POP2 POP2 POP2                             ( -- )
+  ,&start LDR2 [ ,&mode LDR ] DEO2           ( // reset coord to starting value )
+  RETURN
+  &mode $1
+  &start $2
+
+
+@draw_button ( colour -- )
+  #0064 #000a ;draw_filled_rect CALL
+  GET_X #0063 ADD2 SET_X #01 PIXEL
+  GET_Y #0009 ADD2 SET_Y #01 PIXEL
+  GET_X #0063 SUB2 SET_X #01 PIXEL
+  GET_Y #0009 SUB2 SET_Y #01 PIXEL
+  RETURN
+
+
+@draw_filled_rect ( colour width* height* -- )
+  GET_Y DUP2 ,&start_y STR2                  ( colour width* height* y* )
+  ADD2 ,&target_y STR2                       ( colour width* )
+  ,&width STR2 ,&colour STR                  ( -- )
+  &loop
+    [ LIT &colour $1 ]
+    [ LIT2 &width $2 ]
+    ;draw_horizontal_line CALL
+    GET_Y INC2 DUP2 SET_Y                    ( y* )
+    [ LIT2 &target_y $2 ]                    ( y* target_y* )
+    NEQ2 ,&loop JCN                          ( -- )
+  [ LIT2 &start_y $2 ] SET_Y
+  RETURN
+
+
+@fill_screen ( colour -- )
+  GET_X ,&start_x STR2                       ( colour )
+  GET_Y ,&start_y STR2                       ( colour )
+  #0000 SET_X #0000 SET_Y                    ( colour )
+  SCREEN.WIDTH DEI2 SCREEN.HEIGHT DEI2       ( colour width* height* )
+  ;draw_filled_rect CALL                     ( -- )
+  [ LIT2 &start_x $2 ] SET_X
+  [ LIT2 &start_y $2 ] SET_Y
+  RETURN
+
+
+@draw_screen_buffer ( -- )
+  #0000
+  &next_byte
+    DUP2 ;screen_buffer ADD2 LDA
+    #80
+  &draw_byte
+    ANDk EQUk NIP PIXEL                      ( // draw pixel if bit is on )
+    GET_X INC2 SET_X         ( // increment x )
+    #01 SFT                                  ( // right-shift to next bit )
+    #00 NEQk NIP ,&draw_byte JCN             ( // keep parsing bits )
+    POP2 INC2                                ( // increment byte address )
+    DUP2 #0010 MOD2 #0000 NEQ2 ,&next_byte JCN ( check if we're up to the next line yet )
+    #0400 EQU2k #00 NIP2 POP ,&return JCN    ( // return if done )
+
+    GET_Y INC2 SET_Y ( increment y )
+    GET_X #0080 SUB2 SET_X ( reset x )
+    ,&next_byte JMP
+  &return
+    POP2 RETURN
+
+
+@screen_buffer
