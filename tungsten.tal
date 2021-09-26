@@ -24,49 +24,132 @@
 %PIXEL  { SCREEN.PIXEL DEO }
 %HALF2  { #01 SFT2 }
 
+
 %>center_x { #00 STZ2 }
-%>center_y { #02 STZ2 }
 %!center_x { #00 LDZ2 }
+%>center_y { #02 STZ2 }
 %!center_y { #02 LDZ2 }
 
-( --------------------------------------- )
-(         M A I N   P R O G R A M         )
+%>cursor_x { #04 STZ2 }
+%!cursor_x { #04 LDZ2 }
+%>cursor_y { #06 STZ2 }
+%!cursor_y { #06 LDZ2 }
 
-|0100 ( main program )
-#0f2b SYSTEM.RED   DEO2
-#1e8a SYSTEM.GREEN DEO2
-#2a4d SYSTEM.BLUE  DEO2
+%>canvas_x { #08 STZ2 }
+%!canvas_x { #08 LDZ2 }
+%>canvas_y { #0a STZ2 }
+%!canvas_y { #0a LDZ2 }
 
-SCREEN.WIDTH DEI2 HALF2 >center_x
-SCREEN.HEIGHT DEI2 HALF2 >center_y
-
-
-!center_x #0040 SUB2 SET_X
-!center_y #0030 SUB2 SET_Y
-#01 #0080 #0060 ;draw_filled_rect CALL
-
-!center_x #0041 SUB2 SET_X
-!center_y #0031 SUB2 SET_Y
-#02 #0082 #0062 ;draw_rect CALL
-!center_x #0043 SUB2 SET_X
-!center_y #0033 SUB2 SET_Y
-#02 #0086 #0066 ;draw_rect CALL
+%>canvas_width  { #0c STZ2 }
+%!canvas_width  { #0c LDZ2 }
+%>canvas_height { #0e STZ2 }
+%!canvas_height { #0e LDZ2 }
 
 
-!center_x #0032 SUB2 SET_X
-!center_y #0008 ADD2 SET_Y
-#02 ;draw_button CALL
-GET_Y #000c ADD2 SET_Y
-#02 ;draw_button CALL
+( ------------------------------------------------------------------------------- )
+(                             M A I N   P R O G R A M                             )
 
-
-( #02 #0064 #000a ;draw_rect CALL )
+|0100
+  ;initialise_program CALL
+  ( ;draw_splash_screen CALL )
+  #02 ;fill_screen CALL
+  ;draw_workspace CALL
 BRK
 
+@initialise_program ( -- )
+  #f02b #e18a #a24d ;set_colours CALL
+  SCREEN.WIDTH DEI2 #0020 SUB2 >canvas_width
+  SCREEN.HEIGHT DEI2 #0020 SUB2 >canvas_height
+  #0002 >cursor_x
+  #0002 >cursor_y
+  SCREEN.WIDTH DEI2 HALF2 >center_x
+  SCREEN.HEIGHT DEI2 HALF2 >center_y
+  !center_x !canvas_width HALF2 SUB2 >canvas_x
+  !center_y !canvas_height HALF2 SUB2 >canvas_y
+  RETURN
+
+@draw_splash_screen ( -- )
+  !center_x #0040 SUB2 SET_X
+  !center_y #0030 SUB2 SET_Y
+  #01 #0080 #0060 ;draw_filled_rect CALL
+
+  !center_x #0041 SUB2 SET_X
+  !center_y #0031 SUB2 SET_Y
+  #02 #0082 #0062 ;draw_rect CALL
+  !center_x #0043 SUB2 SET_X
+  !center_y #0033 SUB2 SET_Y
+  #02 #0086 #0066 ;draw_rect CALL
 
 
+  !center_x #0032 SUB2 SET_X
+  !center_y #0008 ADD2 SET_Y
+  #02 ;draw_button CALL
+  GET_Y #000c ADD2 SET_Y
+  #02 ;draw_button CALL
+  RETURN
+
+@draw_workspace ( -- )
+  !canvas_x SET_X !canvas_y SET_Y
+  ( ;screen_buffer ;draw_1bit_buffer CALL )
+  ;draw_cursor CALL
+  RETURN
+
+@draw_cursor ( -- )
+  !cursor_x !cursor_y                        ( canvas_x* canvas_y* )
+  ;canvas_coord_to_screen CALL               ( x* y* )
+
+  OVR2 OVR2 SET_Y SET_X #00 PIXEL  ( REMOVE THIS LINE )
 
 
+  ( left arrow )  
+  OVR2 OVR2                                  ( x* y* x* y* )
+  DEC2 SET_Y                                 ( x* y* x* //  0,-1 ) 
+  #0004 SUB2 DUP2 SET_X #01 PIXEL            ( x* y* x* // -4,-1 )
+  INC2 DUP2 SET_X #01 PIXEL                  ( x* y* x* // -3,-1 )
+  DEC2 DUP2 SET_X OVR2 SET_Y #01 PIXEL       ( x* y* x* // -4, 0 )
+  INC2 DUP2 SET_X #00 PIXEL                  ( x* y* x* // -3, 0 )
+  INC2 DUP2 SET_X #01 PIXEL                  ( x* y* x* // -2, 0 )
+  #0002 SUB2 DUP2 SET_X OVR2 INC2 SET_Y      ( x* y* x* // -4, 1 )
+  #01 PIXEL INC2 SET_X #01 PIXEL             ( x* y* )
+
+  ( right arrow )
+  OVR2 OVR2                                  ( x* y* x* y* )
+  DEC2 SET_Y                                 ( x* y* x* // ??,-1 )
+  #0003 ADD2 DUP2 SET_X #01 PIXEL            ( x* y* x* //  3,-1 )
+  INC2 DUP2 SET_X #01 PIXEL                  ( x* y* x* //  4,-1 )
+  #0002 SUB2 DUP2 SET_X OVR2 SET_Y
+  #01 PIXEL INC2 DUP2 SET_X
+  #00 PIXEL INC2 DUP2 SET_X
+  #01 PIXEL
+  DEC2 DUP2 SET_X
+  OVR2 INC2 SET_Y
+  #01 PIXEL
+  INC2 DUP2 SET_X #01 PIXEL
+  ( RESET COORDS TO ZERO )
+  RETURN
+
+
+@canvas_coord_to_screen ( canvas_x* canvas_y* -- screen_x* screen_y* )
+  SWP2 !canvas_x ADD2
+  SWP2 !canvas_y ADD2
+  RETURN
+
+@screen_coord_to_canvas ( screen_x* screen_y* -- canvas_x* canvas_y* )
+  SWP2 !canvas_x SUB2
+  SWP2 !canvas_y SUB2
+  RETURN
+
+@get_buffer_value ( canvas_x* canvas_y* -- colour )
+  ( unimplemented )
+
+( ------------------------------------------------------------------------------- )
+(                         D R A W I N G   R O U T I N E S                         )
+
+@set_colours ( red* green* blue* -- )
+  SYSTEM.BLUE DEO2
+  SYSTEM.GREEN DEO2
+  SYSTEM.RED DEO2
+  RETURN
 
 
 @draw_rect ( colour width* height* -- )
@@ -79,9 +162,9 @@ BRK
   ,&colour LDR                               ( colour )
   &loop
     DUP PIXEL                                ( // draw the left wall )
-    GET_X ,&width LDR2 ADD2 DEC2 SET_X       ( colour )
+    GET_X ,&width LDR2 ADD2 DEC2 SET_X       ( colour  // move to right wall )
     DUP PIXEL                                ( // draw the right wall )
-    GET_X ,&width LDR2 SUB2 INC2 SET_X       ( colour )
+    GET_X ,&width LDR2 SUB2 INC2 SET_X       ( colour // move to left wall )
     GET_Y INC2 DUP2 SET_Y                    ( y* )
     [ LIT2 &target_y $2 ]                    ( y* target_y* )
     NEQ2 ,&loop JCN                          ( -- )
@@ -90,6 +173,21 @@ BRK
   RETURN
   &colour $1
   &width $2
+
+
+@draw_filled_rect ( colour width* height* -- )
+  GET_Y DUP2 ,&start_y STR2                  ( colour width* height* y* )
+  ADD2 ,&target_y STR2                       ( colour width* )
+  ,&width STR2 ,&colour STR                  ( -- )
+  &loop
+    [ LIT &colour $1 ]
+    [ LIT2 &width $2 ]
+    ;draw_horizontal_line CALL
+    GET_Y INC2 DUP2 SET_Y                    ( y* )
+    [ LIT2 &target_y $2 ]                    ( y* target_y* )
+    NEQ2 ,&loop JCN                          ( -- )
+  [ LIT2 &start_y $2 ] SET_Y
+  RETURN
 
 
 @draw_horizontal_line ( colour width* -- )
@@ -122,21 +220,6 @@ BRK
   RETURN
 
 
-@draw_filled_rect ( colour width* height* -- )
-  GET_Y DUP2 ,&start_y STR2                  ( colour width* height* y* )
-  ADD2 ,&target_y STR2                       ( colour width* )
-  ,&width STR2 ,&colour STR                  ( -- )
-  &loop
-    [ LIT &colour $1 ]
-    [ LIT2 &width $2 ]
-    ;draw_horizontal_line CALL
-    GET_Y INC2 DUP2 SET_Y                    ( y* )
-    [ LIT2 &target_y $2 ]                    ( y* target_y* )
-    NEQ2 ,&loop JCN                          ( -- )
-  [ LIT2 &start_y $2 ] SET_Y
-  RETURN
-
-
 @fill_screen ( colour -- )
   GET_X ,&start_x STR2                       ( colour )
   GET_Y ,&start_y STR2                       ( colour )
@@ -148,25 +231,42 @@ BRK
   RETURN
 
 
-@draw_screen_buffer ( -- )
-  #0000
+@draw_1bit_buffer ( addr* )
+  #0000                                      ( addr* offset* )
   &next_byte
-    DUP2 ;screen_buffer ADD2 LDA
-    #80
+    ADD2k LDA #80                            ( addr* offset* byte mask )
   &draw_byte
     ANDk EQUk NIP PIXEL                      ( // draw pixel if bit is on )
-    GET_X INC2 SET_X         ( // increment x )
-    #01 SFT                                  ( // right-shift to next bit )
-    #00 NEQk NIP ,&draw_byte JCN             ( // keep parsing bits )
-    POP2 INC2                                ( // increment byte address )
-    DUP2 #0010 MOD2 #0000 NEQ2 ,&next_byte JCN ( check if we're up to the next line yet )
-    #0400 EQU2k #00 NIP2 POP ,&return JCN    ( // return if done )
+    GET_X INC2 SET_X                         ( // move across to next pixel )
+    #01 SFT                                  ( // set mask to next bit )
+    DUP ,&draw_byte JCN                      ( // keep parsing bits )
 
-    GET_Y INC2 SET_Y ( increment y )
-    GET_X #0080 SUB2 SET_X ( reset x )
+  POP2 INC2                                  ( addr* offset* )
+  DUP2 !canvas_width #0008 DIV2              ( addr* offset* offset* bytes_in_line* )
+  MOD2 ADD                                   ( addr* offset* is_line_incomplete )
+  ,&next_byte JCN                            ( addr* offset* )
+  DUP2 !canvas_width !canvas_height MUL2     ( addr* offset* offset* canvas_pixels* )
+  #0008 DIV2                                 ( addr* offset* offset* canvas_bytes* )
+  EQU2                                       ( addr* offset* is_drawing_complete )
+  ,&clean_up JCN                             ( addr* offset* )
+
+  &next_line
+    GET_Y INC2 SET_Y                         ( // increment y )
+    GET_X !canvas_width SUB2 SET_X           ( // move back to start_x )
     ,&next_byte JMP
-  &return
-    POP2 RETURN
+  &clean_up
+    GET_X !canvas_width SUB2 SET_X
+    GET_Y !canvas_height SUB2 SET_Y
+    POP2 POP2 RETURN
+
 
 
 @screen_buffer
+  0000 5555
+  0000 aaaa
+  0000 5555
+  0000 aaaa
+  0000 5555
+  0000 aaaa
+  0000 5555
+  0000 aaff
