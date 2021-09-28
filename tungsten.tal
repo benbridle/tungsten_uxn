@@ -2,6 +2,8 @@
 %SYSTEM.RED        { #08 }
 %SYSTEM.GREEN      { #0a }
 %SYSTEM.BLUE       { #0c }
+%SYSTEM.DEBUG      { #0e }
+%SYSTEM.HALT       { #0f }
 %SCREEN.VECTOR     { #20 }
 %SCREEN.WIDTH      { #22 }
 %SCREEN.HEIGHT     { #24 }
@@ -32,6 +34,7 @@
 %PIXEL  { SCREEN.PIXEL DEO }
 %HALF2  { #01 SFT2 }
 
+%BREAKPOINT { #0101 SYSTEM.DEBUG DEO2 }
 
 %>center_x { #00 STZ2 }
 %!center_x { #00 LDZ2 }
@@ -61,6 +64,7 @@
   ;initialise_program CALL
   ( ;draw_splash_screen CALL )
   ;draw_workspace CALL
+  ;draw_cursor CALL
 BRK
 
 @initialise_program ( -- )
@@ -89,7 +93,6 @@ BRK
   !center_y #0033 SUB2 SET_Y
   #02 #0086 #0066 ;draw_rect CALL
 
-
   !center_x #0032 SUB2 SET_X
   !center_y #0008 ADD2 SET_Y
   #02 ;draw_button CALL
@@ -101,28 +104,33 @@ BRK
   #02 ;fill_screen CALL
   !canvas_x SET_X !canvas_y SET_Y
   ;screen_buffer ;draw_1bit_buffer CALL
-  ;draw_cursor CALL
   RETURN
 
 @draw_cursor ( -- )
-  GET_X ,&start_x STR2
-  GET_Y ,&start_y STR2
   !cursor_x !cursor_y                        ( canvas_x* canvas_y* )
   ;canvas_coord_to_screen CALL               ( x* y* )
   ;cursor_sprite SCREEN.ADDR DEO2
 
   OVR2 #0004 SUB2 SET_X
   DUP2 #0004 SUB2 SET_Y
-  #85 SCREEN.SPRITE DEO
+  #c5 SCREEN.SPRITE DEO
   OVR2 #0003 SUB2 SET_X
   DUP2 #0003 SUB2 SET_Y
-  #b5 SCREEN.SPRITE DEO
-  POP2 POP2
+  #f5 SCREEN.SPRITE DEO
+  POP2 POP2 RETURN
+  @cursor_sprite 0008 0000 4000 0000 1c1c 08c0 e0c0 0000 
 
-  [ LIT2 &start_x $2 ] SET_X
-  [ LIT2 &start_y $2 ] SET_Y
-  RETURN
-  @cursor_sprite  1c1c 08c0 e0c0 0000 0008 0000 4000 0000
+@erase_cursor ( -- )
+  !cursor_x !cursor_y                        ( canvas_x* canvas_y* )
+  ;canvas_coord_to_screen CALL               ( x* y* )
+
+  OVR2 #0004 SUB2 SET_X
+  DUP2 #0004 SUB2 SET_Y
+  #40 SCREEN.SPRITE DEO
+  OVR2 #0003 SUB2 SET_X
+  DUP2 #0003 SUB2 SET_Y
+  #40 SCREEN.SPRITE DEO
+  POP2 POP2 RETURN
 
 @canvas_coord_to_screen ( canvas_x* canvas_y* -- screen_x* screen_y* )
   SWP2 !canvas_x ADD2
@@ -138,12 +146,20 @@ BRK
   !canvas_width #0008 DIV2 MUL2              ( canvas_x* bytes_height* )
   OVR2 #0008 DIV2 ADD2                       ( canvas_x* offset* )
   SWP2 #0008 MOD2 NIP                        ( offset* bit_id_low_endian )
-  #06 SWP SUB                                ( offset* bit_id_big_endian )
-  #40 SFT #02 SWP SFT                        ( offset* mask )
+  #07 SWP SUB                                ( offset* bit_id_big_endian )
+  #40 SFT #01 SWP SFT                        ( offset* mask )
   RETURN
 
-@get_buffer_value ( canvas_x* canvas_y* -- colour )
-  ( unimplemented )
+@toggle_pixel ( canvas_x* canvas_y* -- )
+  ;canvas_coord_to_offset_and_mask CALL    ( offset* mask )
+  ,&mask STR                               ( offset* )
+  ;screen_buffer ADD2                      ( byte_address* )
+  DUP2 LDA                                 ( byte_address* byte )
+  ,&mask LDR                               ( byte_address* byte mask )
+  EOR                                      ( byte_address* byte )
+  ROT ROT STA
+  RETURN
+  &mask $1
 
 @on_controller ( -- )  
   CONTROLLER.BUTTON DEI                      ( button )
@@ -155,35 +171,36 @@ BRK
   POP BRK
 
   &up POP
-    !cursor_y DEC2 >cursor_y ,&end JMP
+    ;erase_cursor CALL !cursor_y DEC2 >cursor_y ;draw_cursor CALL ,&end JMP
   &down POP
-    !cursor_y INC2 >cursor_y ,&end JMP
+    ;erase_cursor CALL !cursor_y INC2 >cursor_y ;draw_cursor CALL ,&end JMP
   &left POP
-    !cursor_x DEC2 >cursor_x ,&end JMP
+    ;erase_cursor CALL !cursor_x DEC2 >cursor_x ;draw_cursor CALL ,&end JMP
   &right POP
-    !cursor_x INC2 >cursor_x ,&end JMP
+    ;erase_cursor CALL !cursor_x INC2 >cursor_x ;draw_cursor CALL ,&end JMP
   &a POP
     !cursor_x !cursor_y                      ( cursor_x* cursor_y* )
-    ;canvas_coord_to_offset_and_mask CALL    ( offset* mask )
-    ,&mask STR                               ( offset* )
-    ;screen_buffer ADD2                      ( byte_address* )
-    DUP2 LDA                                 ( byte_address* byte )
-    ,&mask LDR                               ( byte_address* byte mask )
-    EOR                                      ( byte_address* byte )
-    ROT ROT STA
+    ;toggle_pixel CALL
     ,&end JMP
-  &mask $1
 
   &end
     ;draw_workspace CALL
     BRK
 
 @on_mouse ( -- )
+  ;erase_cursor CALL
   MOUSE.X DEI2 MOUSE.Y DEI2
   ;screen_coord_to_canvas CALL
   >cursor_y >cursor_x
-  ;draw_workspace CALL
+  ;draw_cursor CALL
+
+  CONTROLLER.BUTTON DEI                      ( button )
+  #01 AND ,&draw JCN
   BRK
+  &draw
+    !cursor_x !cursor_y ;toggle_pixel CALL
+  BRK
+
 
 ( ------------------------------------------------------------------------------- )
 (                         D R A W I N G   R O U T I N E S                         )
@@ -305,11 +322,3 @@ BRK
 
 
 @screen_buffer
-  0000 5555
-  0000 aaaa
-  0000 5555
-  0000 aaaa
-  0000 5555
-  0000 aaaa
-  0000 5555
-  0000 aaff
