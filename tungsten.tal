@@ -102,13 +102,16 @@ BRK
 
 @draw_workspace ( -- )
   #02 ;fill_screen CALL
+  ;draw_canvas CALL
+  RETURN
+
+@draw_canvas ( -- )
   !canvas_x SET_X !canvas_y SET_Y
   ;screen_buffer ;draw_1bit_buffer CALL
   RETURN
 
 @draw_cursor ( -- )
-  !cursor_x !cursor_y                        ( canvas_x* canvas_y* )
-  ;canvas_coord_to_screen CALL               ( x* y* )
+  !cursor_x !cursor_y                        ( screen_x* screen_y* )
   ;cursor_sprite SCREEN.ADDR DEO2
 
   OVR2 #0004 SUB2 SET_X
@@ -118,11 +121,10 @@ BRK
   DUP2 #0003 SUB2 SET_Y
   #f5 SCREEN.SPRITE DEO
   POP2 POP2 RETURN
-  @cursor_sprite 0008 0000 4000 0000 1c1c 08c0 e0c0 0000 
+  @cursor_sprite 1c1c 08c0 e0c0 0000 0008 0000 4000 0000  
 
 @erase_cursor ( -- )
-  !cursor_x !cursor_y                        ( canvas_x* canvas_y* )
-  ;canvas_coord_to_screen CALL               ( x* y* )
+  !cursor_x !cursor_y                        ( x* y* )
 
   OVR2 #0004 SUB2 SET_X
   DUP2 #0004 SUB2 SET_Y
@@ -152,14 +154,25 @@ BRK
 
 @toggle_pixel ( canvas_x* canvas_y* -- )
   ;canvas_coord_to_offset_and_mask CALL    ( offset* mask )
-  ,&mask STR                               ( offset* )
-  ;screen_buffer ADD2                      ( byte_address* )
-  DUP2 LDA                                 ( byte_address* byte )
-  ,&mask LDR                               ( byte_address* byte mask )
+  DUP SWP2                                 ( mask* offset* )
+  ;screen_buffer ADD2                      ( mask* byte_address* )
+  DUP2 LDA                                 ( mask* byte_address* byte )
+  DUP ROT2                                 ( byte_address* byte* mask* )
+  ROT POP2                                 ( byte_address* byte mask )
   EOR                                      ( byte_address* byte )
   ROT ROT STA
   RETURN
-  &mask $1
+
+@set_pixel ( canvas_x* canvas_y* -- )
+  ;canvas_coord_to_offset_and_mask CALL    ( offset* mask )
+  DUP SWP2                                 ( mask* offset* )
+  ;screen_buffer ADD2                      ( mask* byte_address* )
+  DUP2 LDA                                 ( mask* byte_address* byte )
+  DUP ROT2                                 ( byte_address* byte* mask* )
+  ROT POP2                                 ( byte_address* byte mask )
+  ORA                                      ( byte_address* byte )
+  ROT ROT STA
+  RETURN
 
 @on_controller ( -- )  
   CONTROLLER.BUTTON DEI                      ( button )
@@ -179,7 +192,8 @@ BRK
   &right POP
     ;erase_cursor CALL !cursor_x INC2 >cursor_x ;draw_cursor CALL ,&end JMP
   &a POP
-    !cursor_x !cursor_y                      ( cursor_x* cursor_y* )
+    !cursor_x !cursor_y                      ( screen_x* screen_y* )
+    ;screen_coord_to_canvas CALL             ( canvas_x* canvas_y* )
     ;toggle_pixel CALL
     ,&end JMP
 
@@ -188,9 +202,17 @@ BRK
     BRK
 
 @on_mouse ( -- )
+  !cursor_x MOUSE.X DEI2 NEQ2                ( is_x_different )
+  !cursor_y MOUSE.Y DEI2 NEQ2                ( is_x_different is_y_different )
+  ADD                                        ( is_mouse_same )
+  ,&continue JCN BRK
+  &continue
+  
+  MOUSE.X DEI2 MOUSE.Y DEI2                  ( screen_x* screen_y* )
+  OVR2 OVR2
+  POP2 POP2
+
   ;erase_cursor CALL
-  MOUSE.X DEI2 MOUSE.Y DEI2
-  ;screen_coord_to_canvas CALL
   >cursor_y >cursor_x
   ;draw_cursor CALL
 
@@ -198,7 +220,7 @@ BRK
   #01 AND ,&draw JCN
   BRK
   &draw
-    !cursor_x !cursor_y ;toggle_pixel CALL
+    !cursor_x !cursor_y ;screen_coord_to_canvas CALL ;set_pixel CALL ;draw_canvas CALL
   BRK
 
 
