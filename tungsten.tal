@@ -69,8 +69,8 @@ BRK
 
 @initialise_program ( -- )
   #f02b #e18a #a24d ;set_colours CALL
-  SCREEN.WIDTH DEI2 #0020 SUB2 >canvas_width
-  SCREEN.HEIGHT DEI2 #0020 SUB2 >canvas_height
+  SCREEN.WIDTH DEI2 #0023 SUB2 >canvas_width
+  SCREEN.HEIGHT DEI2 #0023 SUB2 >canvas_height
   #0002 >cursor_x
   #0002 >cursor_y
   SCREEN.WIDTH DEI2 HALF2 >center_x
@@ -95,9 +95,9 @@ BRK
 
   !center_x #0032 SUB2 SET_X
   !center_y #0008 ADD2 SET_Y
-  #02 ;draw_button CALL
+  #01 #02 ;draw_button CALL
   GET_Y #000c ADD2 SET_Y
-  #02 ;draw_button CALL
+  #01 #02 ;draw_button CALL
   RETURN
 
 @draw_workspace ( -- )
@@ -140,16 +140,17 @@ BRK
   RETURN
 
 @screen_coord_to_canvas ( screen_x* screen_y* -- canvas_x* canvas_y* )
-  SWP2 !canvas_x SUB2
-  SWP2 !canvas_y SUB2
+  SWP2 !canvas_x SUB2                        ( screen_y* canvas_x* )
+  SWP2 !canvas_y SUB2                        ( canvas_x* canvas_y* )
   RETURN
 
 @canvas_coord_to_offset_and_mask ( canvas_x* canvas_y* -- offset* mask )
-  !canvas_width #0008 DIV2 MUL2              ( canvas_x* bytes_height* )
-  OVR2 #0008 DIV2 ADD2                       ( canvas_x* offset* )
-  SWP2 #0008 MOD2 NIP                        ( offset* bit_id_low_endian )
+  !canvas_width MUL2 ADD2                    ( pixel_index* )
+  DUP2 #0008 DIV2                            ( pixel_index* offset* )
+  SWP2 #0008 MOD2 NIP                        ( offset* bit_id_lit_endian )
   #07 SWP SUB                                ( offset* bit_id_big_endian )
   #40 SFT #01 SWP SFT                        ( offset* mask )
+  ( #40 SFT moves low nibble to high nibble, making the next SFT a left-shift )
   RETURN
 
 @toggle_pixel ( canvas_x* canvas_y* -- )
@@ -164,6 +165,9 @@ BRK
   RETURN
 
 @set_pixel ( canvas_x* canvas_y* -- )
+  OVR2 OVR2                                ( canvas_x* canvas_y* canvas_x* canvas_y* )
+  ;canvas_coord_to_screen CALL             ( canvas_x* canvas_y* screen_x* screen_y* )
+  SET_Y SET_X #01 PIXEL                    ( canvas_x* canvas_y* )
   ;canvas_coord_to_offset_and_mask CALL    ( offset* mask )
   DUP SWP2                                 ( mask* offset* )
   ;screen_buffer ADD2                      ( mask* byte_address* )
@@ -184,22 +188,17 @@ BRK
   POP BRK
 
   &up POP
-    ;erase_cursor CALL !cursor_y DEC2 >cursor_y ;draw_cursor CALL ,&end JMP
+    ;erase_cursor CALL !cursor_y DEC2 >cursor_y ;draw_cursor CALL BRK
   &down POP
-    ;erase_cursor CALL !cursor_y INC2 >cursor_y ;draw_cursor CALL ,&end JMP
+    ;erase_cursor CALL !cursor_y INC2 >cursor_y ;draw_cursor CALL BRK
   &left POP
-    ;erase_cursor CALL !cursor_x DEC2 >cursor_x ;draw_cursor CALL ,&end JMP
+    ;erase_cursor CALL !cursor_x DEC2 >cursor_x ;draw_cursor CALL BRK
   &right POP
-    ;erase_cursor CALL !cursor_x INC2 >cursor_x ;draw_cursor CALL ,&end JMP
+    ;erase_cursor CALL !cursor_x INC2 >cursor_x ;draw_cursor CALL BRK
   &a POP
     !cursor_x !cursor_y                      ( screen_x* screen_y* )
     ;screen_coord_to_canvas CALL             ( canvas_x* canvas_y* )
-    ;toggle_pixel CALL
-    ,&end JMP
-
-  &end
-    ;draw_workspace CALL
-    BRK
+    ;set_pixel CALL BRK
 
 @on_mouse ( -- )
   !cursor_x MOUSE.X DEI2 NEQ2                ( is_x_different )
@@ -207,7 +206,7 @@ BRK
   ADD                                        ( is_mouse_same )
   ,&continue JCN BRK
   &continue
-  
+
   MOUSE.X DEI2 MOUSE.Y DEI2                  ( screen_x* screen_y* )
   OVR2 OVR2
   POP2 POP2
@@ -220,7 +219,7 @@ BRK
   #01 AND ,&draw JCN
   BRK
   &draw
-    !cursor_x !cursor_y ;screen_coord_to_canvas CALL ;set_pixel CALL ;draw_canvas CALL
+    !cursor_x !cursor_y ;screen_coord_to_canvas CALL ;set_pixel CALL
   BRK
 
 
@@ -293,54 +292,53 @@ BRK
   &start $2
 
 
-@draw_button ( colour -- )
-  #0064 #000a ;draw_filled_rect CALL
-  GET_X #0063 ADD2 SET_X #01 PIXEL
-  GET_Y #0009 ADD2 SET_Y #01 PIXEL
-  GET_X #0063 SUB2 SET_X #01 PIXEL
-  GET_Y #0009 SUB2 SET_Y #01 PIXEL
+@draw_button ( bg_colour colour -- )
+  #0064 #000a                                ( bg_colour colour width* height* )
+  ;draw_filled_rect CALL                     ( bg_colour )
+  GET_X #0063 ADD2 SET_X DUP PIXEL           ( bg_colour )
+  GET_Y #0009 ADD2 SET_Y DUP PIXEL           ( bg_colour )
+  GET_X #0063 SUB2 SET_X DUP PIXEL           ( bg_colour )
+  GET_Y #0009 SUB2 SET_Y     PIXEL           ( -- )
   RETURN
 
 
 @fill_screen ( colour -- )
-  GET_X ,&start_x STR2                       ( colour )
-  GET_Y ,&start_y STR2                       ( colour )
   #0000 SET_X #0000 SET_Y                    ( colour )
   SCREEN.WIDTH DEI2 SCREEN.HEIGHT DEI2       ( colour width* height* )
   ;draw_filled_rect CALL                     ( -- )
-  [ LIT2 &start_x $2 ] SET_X
-  [ LIT2 &start_y $2 ] SET_Y
   RETURN
 
 
 @draw_1bit_buffer ( addr* )
+  GET_X ,&start_x STR2
+  GET_Y ,&start_y STR2
   #0000                                      ( addr* offset* )
   &next_byte
     ADD2k LDA #80                            ( addr* offset* byte mask )
   &draw_byte
     ANDk EQUk NIP PIXEL                      ( // draw pixel if bit is on )
-    GET_X INC2 SET_X                         ( // move across to next pixel )
-    #01 SFT                                  ( // set mask to next bit )
-    DUP ,&draw_byte JCN                      ( // keep parsing bits )
-
-  POP2 INC2                                  ( addr* offset* )
-  DUP2 !canvas_width #0008 DIV2              ( addr* offset* offset* bytes_in_line* )
-  MOD2 ADD                                   ( addr* offset* is_line_incomplete )
-  ,&next_byte JCN                            ( addr* offset* )
-  DUP2 !canvas_width !canvas_height MUL2     ( addr* offset* offset* canvas_pixels* )
-  #0008 DIV2                                 ( addr* offset* offset* canvas_bytes* )
-  EQU2                                       ( addr* offset* is_drawing_complete )
-  ,&clean_up JCN                             ( addr* offset* )
-
+    GET_X INC2 DUP2 SET_X                    ( addr* offset* byte mask x* )
+    ,&start_x LDR2 SUB2                      ( addr* offset* byte mask x_offset* )
+    !canvas_width LTH2                       ( addr* offset* byte mask is_line_incomplete )
+    ,&draw_byte_cont JCN                     ( addr* offset* byte mask )
   &next_line
-    GET_Y INC2 SET_Y                         ( // increment y )
-    GET_X !canvas_width SUB2 SET_X           ( // move back to start_x )
+    GET_X !canvas_width SUB2 SET_X           ( addr* offset* byte mask )
+    GET_Y INC2 DUP2 SET_Y                    ( addr* offset* byte mask y* )
+    ,&start_y LDR2 SUB2                      ( addr* offset* byte mask y_offset* )
+    !canvas_height LTH2                      ( addr* offset* byte mask is_buffer_incomplete )
+    ,&draw_byte_cont JCN                     ( addr* offset* byte mask )
+    POP2 POP2 POP2 RETURN                    ( -- )
+  &draw_byte_cont
+    #01 SFT                                  ( addr* offset* byte mask // set mask to next bit )
+    DUP ,&draw_byte JCN                      ( addr* offset* byte mask // keep parsing bits )
+    POP2 INC2                                ( addr* offset* )
     ,&next_byte JMP
-  &clean_up
-    GET_X !canvas_width SUB2 SET_X
-    GET_Y !canvas_height SUB2 SET_Y
-    POP2 POP2 RETURN
-
+  &start_x $2
+  &start_y $2
 
 
 @screen_buffer
+  aaaa 0000 aaaa 0000
+  aaaa 0000 aaaa 0000
+  aaaa 0000 aaaa 0000
+  aaaa 0000 aaaa 0000
