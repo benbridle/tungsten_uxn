@@ -97,20 +97,20 @@ BRK
   ,&colour STR                               ( -- )
   ,&x1 LDR2 [ LIT2 &x0 $2 ] SUB2             ( dx* )
   [ LIT2 &y1 $2 ]  [ LIT2 &y0 $2 ]  SUB2     ( dx* dy* )
-
   DUP2 ISPOS2                                ( dx* dy* is_dy_zero_or_greater )
   ,&dy_zero_or_greater JCN                   ( dx* dy* )
 
   &dy_is_negative
-    [ LIT2 ffff ]  ,&yi STR2                 ( dx* dy* )
+    #ffff ,&yi STR2                          ( dx* dy* )
     NEG2                                     ( dx* -dy* )
+    ,&start_cont JMP
   &dy_zero_or_greater
+    #0001 ,&yi STR2                          ( dx* dy* )  
+  &start_cont
     OVR2 ,&dx STR2 DUP2 ,&dy STR2            ( // store dx and dy )
-    DOUBLE2 SWP2 SUB2                        ( D* )
-
-  ,&loop JMP
-  &x1 $2  &dx $2  &dy $2
-
+    DOUBLE2 SWP2 SUB2                        ( D* )  
+    ,&loop JMP
+      &x1 $2  &dx $2  &dy $2
 
   &loop
     [ LIT &colour $1 ]  >SCREEN.PIXEL        ( D* )
@@ -129,6 +129,7 @@ BRK
     >SCREEN.X ,&x1 LDR2 LTH2                 ( D* is_line_complete // increment x )
     ,&loop JCN                               ( D* )
   POP2 RETURN
+
 
 
 
