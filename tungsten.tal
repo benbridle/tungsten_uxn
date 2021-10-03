@@ -50,7 +50,9 @@
 %HALF2    { #01 SFT2 }
 %DOUBLE2  { #10 SFT2 }
 %ISNEG2   { #7fff GTH2 }
+%ISPOS2   { #8000 LTH2 }
 %NOT      { #00 EQU }
+%NEG2     { #0000 SWP2 SUB2 }
 
 %BREAK_IF_NOT  { #01 JCN BRK }
 %BREAKPOINT  { #0101 SYSTEM.DEBUG DEO2 }
@@ -93,28 +95,41 @@ BRK
   DUP2 ,&y0 STR2 >SCREEN.Y                   ( colour x0* )
   DUP2 ,&x0 STR2 >SCREEN.X                   ( colour )
   ,&colour STR                               ( -- )
-  ,&x1 LDR2 ,&x0 LDR2 SUB2 DUP2 ,&dx STR2    ( dx* )
-  ,&y1 LDR2 ,&y0 LDR2 SUB2 DUP2 ,&dy STR2    ( dx* dy* )
-  DOUBLE2 SWP2 SUB2                          ( D* )
+  ,&x1 LDR2 [ LIT2 &x0 $2 ] SUB2             ( dx* )
+  [ LIT2 &y1 $2 ]  [ LIT2 &y0 $2 ]  SUB2     ( dx* dy* )
+
+  DUP2 ISPOS2                                ( dx* dy* is_dy_zero_or_greater )
+  ,&dy_zero_or_greater JCN                   ( dx* dy* )
+
+  &dy_is_negative
+    [ LIT2 ffff ]  ,&yi STR2                 ( dx* dy* )
+    NEG2                                     ( dx* -dy* )
+  &dy_zero_or_greater
+    OVR2 ,&dx STR2 DUP2 ,&dy STR2            ( // store dx and dy )
+    DOUBLE2 SWP2 SUB2                        ( D* )
+
+  ,&loop JMP
+  &x1 $2  &dx $2  &dy $2
+
 
   &loop
-    [ LIT &colour $1 ] >SCREEN.PIXEL         ( D* )
-    DUP2 ISNEG2                              ( D* is_d_less_than_zero )
-    ,&cont JCN                               ( D* )
-  &increment_y
-    !SCREEN.Y INC2 >SCREEN.Y                 ( D* )
-    ,&dx LDR2 DOUBLE2 SUB2                   ( D* )
-  &cont
-    ,&dy LDR2 DOUBLE2 ADD2                   ( D* )
+    [ LIT &colour $1 ]  >SCREEN.PIXEL        ( D* )
+    DUP2 DEC2 ISNEG2                         ( D* is_d_less_or_equal_zero )
+    ,&d_less_or_equal_zero JCN               ( D* )
+  &d_greater_than_zero
+    !SCREEN.Y  [ LIT2 &yi 0001 ]             ( D* y* yi* )
+    ADD2 >SCREEN.Y                           ( D*  // increment y )
+    ,&dy LDR2 ,&dx LDR2 SUB2                 ( D* dy-dx* )
+    DOUBLE2 ADD2                             ( D*  // D+=2*(dy-dx) )
+    ,&increment_x_and_check_if_done JMP      ( D* )
+  &d_less_or_equal_zero
+    ,&dy LDR2 DOUBLE2 ADD2                   ( D* // D+=2*dy )
   &increment_x_and_check_if_done
     !SCREEN.X DUP2 INC2                      ( D* x* x+1* )
     >SCREEN.X ,&x1 LDR2 LTH2                 ( D* is_line_complete // increment x )
     ,&loop JCN                               ( D* )
   POP2 RETURN
 
-  &x0 $2  &y0 $2
-  &x1 $2  &y1 $2
-  &dx $2  &dy $2
 
 
 
