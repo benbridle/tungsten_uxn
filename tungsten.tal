@@ -4,7 +4,6 @@
 %SYSTEM.BLUE       { #0c }
 %SYSTEM.DEBUG      { #0e }
 %SYSTEM.HALT       { #0f }
-%SCREEN.VECTOR     { #20 }
 %SCREEN.WIDTH      { #22 }
 %SCREEN.HEIGHT     { #24 }
 %SCREEN.X          { #28 }
@@ -21,35 +20,55 @@
 %MOUSE.STATE       { #95 }
 %MOUSE.WHEEL       { #96 }
 
-%MOD    { DIVk MUL SUB }
-%MOD2   { DIV2k MUL2 SUB2 }
-%DEC    { #01 SUB }
-%DEC2   { #0001 SUB2 }
-%CALL   { JSR2 }
-%RETURN { JMP2r }
-%GET_X  { SCREEN.X DEI2 }
-%GET_Y  { SCREEN.Y DEI2 }
-%SET_X  { SCREEN.X DEO2 }
-%SET_Y  { SCREEN.Y DEO2 }
-%PIXEL  { SCREEN.PIXEL DEO }
-%HALF2  { #01 SFT2 }
+%!SCREEN.WIDTH      { SCREEN.WIDTH DEI2 }
+%!SCREEN.HEIGHT     { SCREEN.HEIGHT DEI2 }
+%!SCREEN.X          { SCREEN.X DEI2 }
+%!SCREEN.Y          { SCREEN.Y DEI2 }
+%!CONTROLLER.BUTTON { CONTROLLER.BUTTON DEI }
+%!CONTROLLER.KEY    { CONTROLLER.KEY DEI }
+%!MOUSE.X           { MOUSE.X DEI2 }
+%!MOUSE.Y           { MOUSE.Y DEI2 }
+%!MOUSE.STATE       { MOUSE.STATE DEI }
+%!MOUSE.WHEEL       { MOUSE.WHEEL DEI }
+%>SYSTEM.RED        { SYSTEM.RED DEO2 }
+%>SYSTEM.GREEN      { SYSTEM.GREEN DEO2 }
+%>SYSTEM.BLUE       { SYSTEM.BLUE DEO2 }
+%>SCREEN.X          { SCREEN.X DEO2 }
+%>SCREEN.Y          { SCREEN.Y DEO2 }
+%>SCREEN.ADDR       { SCREEN.ADDR DEO2 }
+%>SCREEN.PIXEL      { SCREEN.PIXEL DEO }
+%>SCREEN.SPRITE     { SCREEN.SPRITE DEO }
+%>CONTROLLER.VECTOR { CONTROLLER.VECTOR DEO2 }
+%>MOUSE.VECTOR      { MOUSE.VECTOR DEO2 }
 
-%BREAKPOINT { #0101 SYSTEM.DEBUG DEO2 }
+%MOD      { DIVk MUL SUB }
+%MOD2     { DIV2k MUL2 SUB2 }
+%DEC      { #01 SUB }
+%DEC2     { #0001 SUB2 }
+%CALL     { JSR2 }
+%RETURN   { JMP2r }
+%HALF2    { #01 SFT2 }
+%DOUBLE2  { #10 SFT2 }
+%ISNEG2   { #7fff GTH2 }
+%NOT      { #00 EQU }
 
-%>center_x { #00 STZ2 }
-%!center_x { #00 LDZ2 }
-%>center_y { #02 STZ2 }
-%!center_y { #02 LDZ2 }
+%BREAK_IF_NOT  { #01 JCN BRK }
+%BREAKPOINT  { #0101 SYSTEM.DEBUG DEO2 }
 
-%>cursor_x { #04 STZ2 }
-%!cursor_x { #04 LDZ2 }
-%>cursor_y { #06 STZ2 }
-%!cursor_y { #06 LDZ2 }
+%>center_x  { #00 STZ2 }
+%!center_x  { #00 LDZ2 }
+%>center_y  { #02 STZ2 }
+%!center_y  { #02 LDZ2 }
 
-%>canvas_x { #08 STZ2 }
-%!canvas_x { #08 LDZ2 }
-%>canvas_y { #0a STZ2 }
-%!canvas_y { #0a LDZ2 }
+%>cursor_x  { #04 STZ2 }
+%!cursor_x  { #04 LDZ2 }
+%>cursor_y  { #06 STZ2 }
+%!cursor_y  { #06 LDZ2 }
+
+%>canvas_x  { #08 STZ2 }
+%!canvas_x  { #08 LDZ2 }
+%>canvas_y  { #0a STZ2 }
+%!canvas_y  { #0a LDZ2 }
 
 %>canvas_width  { #0c STZ2 }
 %!canvas_width  { #0c LDZ2 }
@@ -63,14 +82,46 @@
 |0100
   ;initialise_program CALL
   ( ;draw_splash_screen CALL )
-  ;draw_workspace CALL
+  ( ;draw_workspace CALL )
+  #02 ;fill_screen CALL
   ;draw_cursor CALL
 BRK
 
+
+@draw_line ( colour x0* y0* x1* y1* -- )
+  ,&y1 STR2 ,&x1 STR2                        ( colour x0* y0* )
+  DUP2 ,&y0 STR2 >SCREEN.Y                   ( colour x0* )
+  DUP2 ,&x0 STR2 >SCREEN.X                   ( colour )
+  ,&colour STR                               ( -- )
+  ,&x1 LDR2 ,&x0 LDR2 SUB2 DUP2 ,&dx STR2    ( dx* )
+  ,&y1 LDR2 ,&y0 LDR2 SUB2 DUP2 ,&dy STR2    ( dx* dy* )
+  DOUBLE2 SWP2 SUB2                          ( D* )
+
+  &loop
+    [ LIT &colour $1 ] >SCREEN.PIXEL         ( D* )
+    DUP2 ISNEG2                              ( D* is_d_less_than_zero )
+    ,&cont JCN                               ( D* )
+  &increment_y
+    !SCREEN.Y INC2 >SCREEN.Y                 ( D* )
+    ,&dx LDR2 DOUBLE2 SUB2                   ( D* )
+  &cont
+    ,&dy LDR2 DOUBLE2 ADD2                   ( D* )
+  &increment_x_and_check_if_done
+    !SCREEN.X DUP2 INC2                      ( D* x* x+1* )
+    >SCREEN.X ,&x1 LDR2 LTH2                 ( D* is_line_complete // increment x )
+    ,&loop JCN                               ( D* )
+  POP2 RETURN
+
+  &x0 $2  &y0 $2
+  &x1 $2  &y1 $2
+  &dx $2  &dy $2
+
+
+
 @initialise_program ( -- )
   #f02b #e18a #a24d ;set_colours CALL
-  SCREEN.WIDTH DEI2 #0023 SUB2 >canvas_width
-  SCREEN.HEIGHT DEI2 #0023 SUB2 >canvas_height
+  !SCREEN.WIDTH #0023 SUB2 >canvas_width
+  !SCREEN.HEIGHT #0023 SUB2 >canvas_height
   #0002 >cursor_x
   #0002 >cursor_y
   SCREEN.WIDTH DEI2 HALF2 >center_x
@@ -82,21 +133,21 @@ BRK
   RETURN
 
 @draw_splash_screen ( -- )
-  !center_x #0040 SUB2 SET_X
-  !center_y #0030 SUB2 SET_Y
+  !center_x #0040 SUB2 >SCREEN.X
+  !center_y #0030 SUB2 >SCREEN.Y
   #01 #0080 #0060 ;draw_filled_rect CALL
 
-  !center_x #0041 SUB2 SET_X
-  !center_y #0031 SUB2 SET_Y
+  !center_x #0041 SUB2 >SCREEN.X
+  !center_y #0031 SUB2 >SCREEN.Y
   #02 #0082 #0062 ;draw_rect CALL
-  !center_x #0043 SUB2 SET_X
-  !center_y #0033 SUB2 SET_Y
+  !center_x #0043 SUB2 >SCREEN.X
+  !center_y #0033 SUB2 >SCREEN.Y
   #02 #0086 #0066 ;draw_rect CALL
 
-  !center_x #0032 SUB2 SET_X
-  !center_y #0008 ADD2 SET_Y
+  !center_x #0032 SUB2 >SCREEN.X
+  !center_y #0008 ADD2 >SCREEN.Y
   #01 #02 ;draw_button CALL
-  GET_Y #000c ADD2 SET_Y
+  !SCREEN.Y #000c ADD2 >SCREEN.Y
   #01 #02 ;draw_button CALL
   RETURN
 
@@ -106,7 +157,7 @@ BRK
   RETURN
 
 @draw_canvas ( -- )
-  !canvas_x SET_X !canvas_y SET_Y
+  !canvas_x >SCREEN.X !canvas_y >SCREEN.Y
   ;screen_buffer ;draw_1bit_buffer CALL
   RETURN
 
@@ -114,11 +165,11 @@ BRK
   !cursor_x !cursor_y                        ( screen_x* screen_y* )
   ;cursor_sprite SCREEN.ADDR DEO2
 
-  OVR2 #0004 SUB2 SET_X
-  DUP2 #0004 SUB2 SET_Y
+  OVR2 #0004 SUB2 >SCREEN.X
+  DUP2 #0004 SUB2 >SCREEN.Y
   #c5 SCREEN.SPRITE DEO
-  OVR2 #0003 SUB2 SET_X
-  DUP2 #0003 SUB2 SET_Y
+  OVR2 #0003 SUB2 >SCREEN.X
+  DUP2 #0003 SUB2 >SCREEN.Y
   #f5 SCREEN.SPRITE DEO
   POP2 POP2 RETURN
   @cursor_sprite 1c1c 08c0 e0c0 0000 0008 0000 4000 0000  
@@ -126,11 +177,11 @@ BRK
 @erase_cursor ( -- )
   !cursor_x !cursor_y                        ( x* y* )
 
-  OVR2 #0004 SUB2 SET_X
-  DUP2 #0004 SUB2 SET_Y
+  OVR2 #0004 SUB2 >SCREEN.X
+  DUP2 #0004 SUB2 >SCREEN.Y
   #40 SCREEN.SPRITE DEO
-  OVR2 #0003 SUB2 SET_X
-  DUP2 #0003 SUB2 SET_Y
+  OVR2 #0003 SUB2 >SCREEN.X
+  DUP2 #0003 SUB2 >SCREEN.Y
   #40 SCREEN.SPRITE DEO
   POP2 POP2 RETURN
 
@@ -154,27 +205,27 @@ BRK
   RETURN
 
 @toggle_pixel ( canvas_x* canvas_y* -- )
-  ;canvas_coord_to_offset_and_mask CALL    ( offset* mask )
-  DUP SWP2                                 ( mask* offset* )
-  ;screen_buffer ADD2                      ( mask* byte_address* )
-  DUP2 LDA                                 ( mask* byte_address* byte )
-  DUP ROT2                                 ( byte_address* byte* mask* )
-  ROT POP2                                 ( byte_address* byte mask )
-  EOR                                      ( byte_address* byte )
+  ;canvas_coord_to_offset_and_mask CALL      ( offset* mask )
+  DUP SWP2                                   ( mask* offset* )
+  ;screen_buffer ADD2                        ( mask* byte_address* )
+  DUP2 LDA                                   ( mask* byte_address* byte )
+  DUP ROT2                                   ( byte_address* byte* mask* )
+  ROT POP2                                   ( byte_address* byte mask )
+  EOR                                        ( byte_address* byte )
   ROT ROT STA
   RETURN
 
 @set_pixel ( canvas_x* canvas_y* -- )
-  OVR2 OVR2                                ( canvas_x* canvas_y* canvas_x* canvas_y* )
-  ;canvas_coord_to_screen CALL             ( canvas_x* canvas_y* screen_x* screen_y* )
-  SET_Y SET_X #01 PIXEL                    ( canvas_x* canvas_y* )
-  ;canvas_coord_to_offset_and_mask CALL    ( offset* mask )
-  DUP SWP2                                 ( mask* offset* )
-  ;screen_buffer ADD2                      ( mask* byte_address* )
-  DUP2 LDA                                 ( mask* byte_address* byte )
-  DUP ROT2                                 ( byte_address* byte* mask* )
-  ROT POP2                                 ( byte_address* byte mask )
-  ORA                                      ( byte_address* byte )
+  OVR2 OVR2                                  ( canvas_x* canvas_y* canvas_x* canvas_y* )
+  ;canvas_coord_to_screen CALL               ( canvas_x* canvas_y* screen_x* screen_y* )
+  >SCREEN.Y >SCREEN.X #01 >SCREEN.PIXEL      ( canvas_x* canvas_y* )
+  ;canvas_coord_to_offset_and_mask CALL      ( offset* mask )
+  DUP SWP2                                   ( mask* offset* )
+  ;screen_buffer ADD2                        ( mask* byte_address* )
+  DUP2 LDA                                   ( mask* byte_address* byte )
+  DUP ROT2                                   ( byte_address* byte* mask* )
+  ROT POP2                                   ( byte_address* byte mask )
+  ORA                                        ( byte_address* byte )
   ROT ROT STA
   RETURN
 
@@ -201,19 +252,20 @@ BRK
     ;set_pixel CALL BRK
 
 @on_mouse ( -- )
-  !cursor_x MOUSE.X DEI2 NEQ2                ( is_x_different )
-  !cursor_y MOUSE.Y DEI2 NEQ2                ( is_x_different is_y_different )
-  ADD                                        ( is_mouse_same )
-  ,&continue JCN BRK
-  &continue
+  !cursor_x !MOUSE.X NEQ2                    ( is_x_different )
+  !cursor_y !MOUSE.Y NEQ2                    ( is_x_different is_y_different )
+  ADD                                        ( is_mouse_different )
+  BREAK_IF_NOT
 
-  MOUSE.X DEI2 MOUSE.Y DEI2                  ( screen_x* screen_y* )
-  OVR2 OVR2
-  POP2 POP2
+  #40 #0040 #0040 !cursor_x !cursor_y ;draw_line CALL  ( // erase line )
 
-  ;erase_cursor CALL
-  >cursor_y >cursor_x
+
+  ;erase_cursor CALL                         ( -- )
+  !MOUSE.X >cursor_x
+  !MOUSE.Y >cursor_y
   ;draw_cursor CALL
+
+  #41 #0040 #0040 !MOUSE.X !MOUSE.Y ;draw_line CALL   ( // draw line )
 
   CONTROLLER.BUTTON DEI                      ( button )
   #01 AND ,&draw JCN
@@ -234,40 +286,40 @@ BRK
 
 
 @draw_rect ( colour width* height* -- )
-  GET_Y DUP2 ,&start_y STR2                  ( colour width* height* y* )
+  !SCREEN.Y DUP2 ,&start_y STR2              ( colour width* height* y* )
   ADD2 DEC2 ,&target_y STR2                  ( colour width* )
   STH2 DUP ,&colour STR STH2r                ( colour width* )
   DUP2 ,&width STR2                          ( colour width* )
   ;draw_horizontal_line CALL                 ( // draw the top line )
-  GET_Y INC2 SET_Y                           ( -- )
+  !SCREEN.Y INC2 >SCREEN.Y                   ( -- )
   ,&colour LDR                               ( colour )
   &loop
-    DUP PIXEL                                ( // draw the left wall )
-    GET_X ,&width LDR2 ADD2 DEC2 SET_X       ( colour  // move to right wall )
-    DUP PIXEL                                ( // draw the right wall )
-    GET_X ,&width LDR2 SUB2 INC2 SET_X       ( colour // move to left wall )
-    GET_Y INC2 DUP2 SET_Y                    ( y* )
+    DUP >SCREEN.PIXEL                        ( // draw the left wall )
+    !SCREEN.X ,&width LDR2 ADD2 DEC2 >SCREEN.X   ( colour  // move to right wall )
+    DUP >SCREEN.PIXEL                        ( // draw the right wall )
+    !SCREEN.X ,&width LDR2 SUB2 INC2 >SCREEN.X   ( colour // move to left wall )
+    !SCREEN.Y INC2 DUP2 >SCREEN.Y            ( y* )
     [ LIT2 &target_y $2 ]                    ( y* target_y* )
     NEQ2 ,&loop JCN                          ( -- )
   ,&width LDR2 ;draw_horizontal_line CALL    ( // draw the bottom line )
-  [ LIT2 &start_y $2 ] SET_Y
+  [ LIT2 &start_y $2 ] >SCREEN.Y
   RETURN
   &colour $1
   &width $2
 
 
 @draw_filled_rect ( colour width* height* -- )
-  GET_Y DUP2 ,&start_y STR2                  ( colour width* height* y* )
+  !SCREEN.Y DUP2 ,&start_y STR2              ( colour width* height* y* )
   ADD2 ,&target_y STR2                       ( colour width* )
   ,&width STR2 ,&colour STR                  ( -- )
   &loop
     [ LIT &colour $1 ]
     [ LIT2 &width $2 ]
     ;draw_horizontal_line CALL
-    GET_Y INC2 DUP2 SET_Y                    ( y* )
+    !SCREEN.Y INC2 DUP2 >SCREEN.Y            ( y* )
     [ LIT2 &target_y $2 ]                    ( y* target_y* )
     NEQ2 ,&loop JCN                          ( -- )
-  [ LIT2 &start_y $2 ] SET_Y
+  [ LIT2 &start_y $2 ] >SCREEN.Y
   RETURN
 
 
@@ -282,7 +334,7 @@ BRK
   [ ,&mode LDR ] DEI2 DUP2 ,&start STR2      ( colour* length* coord* )
   DUP2 ROT2 ADD2 SWP2                        ( colour* target* start* )
   &loop
-    ROT2 DUP PIXEL ROT2 ROT2                 ( // draw a pixel )
+    ROT2 DUP >SCREEN.PIXEL ROT2 ROT2         ( // draw a pixel )
     INC2 DUP2 [ ,&mode LDR ] DEO2            ( colour* target* coord* )
     NEQ2k ,&loop JCN                         ( colour* target* coord* )
   POP2 POP2 POP2                             ( -- )
@@ -295,42 +347,42 @@ BRK
 @draw_button ( bg_colour colour -- )
   #0064 #000a                                ( bg_colour colour width* height* )
   ;draw_filled_rect CALL                     ( bg_colour )
-  GET_X #0063 ADD2 SET_X DUP PIXEL           ( bg_colour )
-  GET_Y #0009 ADD2 SET_Y DUP PIXEL           ( bg_colour )
-  GET_X #0063 SUB2 SET_X DUP PIXEL           ( bg_colour )
-  GET_Y #0009 SUB2 SET_Y     PIXEL           ( -- )
+  !SCREEN.X #0063 ADD2 >SCREEN.X DUP >SCREEN.PIXEL   ( bg_colour )
+  !SCREEN.Y #0009 ADD2 >SCREEN.Y DUP >SCREEN.PIXEL   ( bg_colour )
+  !SCREEN.X #0063 SUB2 >SCREEN.X DUP >SCREEN.PIXEL   ( bg_colour )
+  !SCREEN.Y #0009 SUB2 >SCREEN.Y     >SCREEN.PIXEL   ( -- )
   RETURN
 
 
 @fill_screen ( colour -- )
-  #0000 SET_X #0000 SET_Y                    ( colour )
+  #0000 >SCREEN.X #0000 >SCREEN.Y            ( colour )
   SCREEN.WIDTH DEI2 SCREEN.HEIGHT DEI2       ( colour width* height* )
   ;draw_filled_rect CALL                     ( -- )
   RETURN
 
 
 @draw_1bit_buffer ( addr* )
-  GET_X ,&start_x STR2
-  GET_Y ,&start_y STR2
+  !SCREEN.X ,&start_x STR2
+  !SCREEN.Y ,&start_y STR2
   #0000                                      ( addr* offset* )
   &next_byte
     ADD2k LDA #80                            ( addr* offset* byte mask )
   &draw_byte
-    ANDk EQUk NIP PIXEL                      ( // draw pixel if bit is on )
-    GET_X INC2 DUP2 SET_X                    ( addr* offset* byte mask x* )
+    ANDk EQUk NIP >SCREEN.PIXEL              ( // draw pixel if bit is on )
+    !SCREEN.X INC2 DUP2 >SCREEN.X            ( addr* offset* byte mask x* )
     ,&start_x LDR2 SUB2                      ( addr* offset* byte mask x_offset* )
     !canvas_width LTH2                       ( addr* offset* byte mask is_line_incomplete )
     ,&draw_byte_cont JCN                     ( addr* offset* byte mask )
   &next_line
-    GET_X !canvas_width SUB2 SET_X           ( addr* offset* byte mask )
-    GET_Y INC2 DUP2 SET_Y                    ( addr* offset* byte mask y* )
+    !SCREEN.X !canvas_width SUB2 >SCREEN.X   ( addr* offset* byte mask )
+    !SCREEN.Y INC2 DUP2 >SCREEN.Y            ( addr* offset* byte mask y* )
     ,&start_y LDR2 SUB2                      ( addr* offset* byte mask y_offset* )
     !canvas_height LTH2                      ( addr* offset* byte mask is_buffer_incomplete )
     ,&draw_byte_cont JCN                     ( addr* offset* byte mask )
     POP2 POP2 POP2 RETURN                    ( -- )
   &draw_byte_cont
-    #01 SFT                                  ( addr* offset* byte mask // set mask to next bit )
-    DUP ,&draw_byte JCN                      ( addr* offset* byte mask // keep parsing bits )
+    HALF2                                    ( addr* offset* byte mask )
+    DUP ,&draw_byte JCN                      ( addr* offset* byte mask )
     POP2 INC2                                ( addr* offset* )
     ,&next_byte JMP
   &start_x $2
