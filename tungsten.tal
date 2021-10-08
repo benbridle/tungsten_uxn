@@ -55,6 +55,15 @@
 %NEG2     { #0000 SWP2 SUB2 }
 %ABS2     { DUP2 ISPOS2 #05 JCN NEG2 }
 
+%INC_X    { !SCREEN.X INC2 >SCREEN.X }
+%INC_Y    { !SCREEN.Y INC2 >SCREEN.Y }
+%DEC_X    { !SCREEN.X DEC2 >SCREEN.X }
+%DEC_Y    { !SCREEN.Y DEC2 >SCREEN.Y }
+%ADD_X    { !SCREEN.X ADD2 >SCREEN.X }
+%ADD_Y    { !SCREEN.Y ADD2 >SCREEN.Y }
+%SUB_X    { !SCREEN.X SWP2 SUB2 >SCREEN.X }
+%SUB_Y    { !SCREEN.Y SWP2 SUB2 >SCREEN.Y }
+
 %BREAK_IF_NOT  { #01 JCN BRK }
 %BREAKPOINT  { #0101 SYSTEM.DEBUG DEO2 }
 %HALT  { #01 SYSTEM.HALT DEO }
@@ -91,32 +100,6 @@
   #02 ;fill_screen CALL
   ;draw_cursor CALL
 BRK
-
-
-@draw_text ( text_addr* colour -- )
-  ,&colour STR                               ( text_addr* )
-  !SCREEN.X ,&start_x STR2                   ( text_addr* )
-  &loop
-    DUP2 LDA                                 ( text_addr* ascii )
-    DUP ,&render JCN                         ( text_addr* ascii )
-  &end
-    POP POP2                                 ( -- )
-    [ LIT2 &start_x $2 ] >SCREEN.X           ( -- )
-    RETURN
-  &render
-    #20 SUB                                  ( text_addr* char_code )
-    #00 SWP                                  ( text_addr* char_code* )
-    DUP2                                     ( text_addr* char_code* char_code* )
-    #30 SFT2                                 ( text_addr* char_code* offset* )
-    ;acorn_font/characters ADD2              ( text_addr* char_code* char_addr* )
-    >SCREEN.ADDR                             ( text_addr* char_code* )
-    [ LIT &colour $1 ]  >SCREEN.SPRITE       ( text_addr* char_code* )
-    ;acorn_font/width ADD2                   ( text_addr* width_addr* )
-    LDA                                      ( text_addr* char_width )
-    #00 SWP                                  ( text_addr* char_width* )
-    !SCREEN.X ADD2 >SCREEN.X                 ( text_addr* )
-    INC2                                     ( text_addr* )
-    ,&loop JMP
 
 
 @draw_line ( colour x0* y0* x1* y1* -- )
@@ -178,35 +161,21 @@ BRK
   RETURN
 
 @draw_splash_screen ( -- )
+  ( Draw frame )
   !center_x #0040 SUB2 >SCREEN.X
   !center_y #0030 SUB2 >SCREEN.Y
   #01 #0080 #0060 ;draw_filled_rect CALL
-
-  !center_x #0041 SUB2 >SCREEN.X
-  !center_y #0031 SUB2 >SCREEN.Y
+  DEC_X DEC_Y
   #02 #0082 #0062 ;draw_rect CALL
-  !center_x #0043 SUB2 >SCREEN.X
-  !center_y #0033 SUB2 >SCREEN.Y
+  #0002 DUP2 SUB_X SUB_Y
   #02 #0086 #0066 ;draw_rect CALL
 
   ( Draw buttons )
   !center_x #0032 SUB2 >SCREEN.X
   !center_y #0008 ADD2 >SCREEN.Y
-  #01 #02 ;draw_button CALL
-  !SCREEN.X #000b ADD2 >SCREEN.X
-  !SCREEN.Y #0002 ADD2 >SCREEN.Y
-  ;&button_1_text #08 ;draw_text CALL
-  !SCREEN.X #000b SUB2 >SCREEN.X
-  !SCREEN.Y #0002 SUB2 >SCREEN.Y
-
+  #08 #0064 ;&button_1_text ;draw_button CALL
   !SCREEN.Y #000c ADD2 >SCREEN.Y
-  #01 #02 ;draw_button CALL
-  !SCREEN.X #0012 ADD2 >SCREEN.X
-  !SCREEN.Y #0002 ADD2 >SCREEN.Y
-  ;&button_2_text #08 ;draw_text CALL
-  !SCREEN.X #0012 SUB2 >SCREEN.X
-  !SCREEN.Y #0002 SUB2 >SCREEN.Y
-
+  #08 #0064 ;&button_2_text ;draw_button CALL
   RETURN
   &button_1_text "Create 20 "image 00
   &button_2_text "Load 20 "image 00
@@ -352,8 +321,7 @@ BRK
   STH2 DUP ,&colour STR STH2r                ( colour width* )
   DUP2 ,&width STR2                          ( colour width* )
   ;draw_horizontal_line CALL                 ( // draw the top line )
-  !SCREEN.Y INC2 >SCREEN.Y                   ( -- )
-  ,&colour LDR                               ( colour )
+  INC_Y ,&colour LDR                         ( colour // move to next line )
   &loop
     DUP >SCREEN.PIXEL                        ( // draw the left wall )
     !SCREEN.X ,&width LDR2 ADD2 DEC2 >SCREEN.X   ( colour  // move to right wall )
@@ -405,13 +373,84 @@ BRK
   &start $2
 
 
-@draw_button ( bg_colour colour -- )
-  #0064 #000b                                ( bg_colour colour width* height* )
-  ;draw_filled_rect CALL                     ( bg_colour )
-  !SCREEN.X #0063 ADD2 >SCREEN.X DUP >SCREEN.PIXEL   ( bg_colour )
-  !SCREEN.Y #000a ADD2 >SCREEN.Y DUP >SCREEN.PIXEL   ( bg_colour )
-  !SCREEN.X #0063 SUB2 >SCREEN.X DUP >SCREEN.PIXEL   ( bg_colour )
-  !SCREEN.Y #000a SUB2 >SCREEN.Y     >SCREEN.PIXEL   ( -- )
+@draw_text ( colour text_addr* -- )
+  ROT ,&colour STR                           ( text_addr* )
+  !SCREEN.X ,&start_x STR2                   ( text_addr* )
+  &loop
+    DUP2 LDA                                 ( text_addr* ascii )
+    DUP ,&render JCN                         ( text_addr* ascii )
+  &end
+    POP POP2                                 ( -- )
+    [ LIT2 &start_x $2 ] >SCREEN.X           ( // move x back to start )
+    RETURN
+  &render
+    #20 SUB #00 SWP                          ( text_addr* char_code* )
+    DUP2 #30 SFT2                            ( text_addr* char_code* char_offset* )
+    ;acorn_font/characters ADD2              ( text_addr* char_code* char_addr* )
+    >SCREEN.ADDR                             ( text_addr* char_code* )
+    [ LIT &colour $1 ]  >SCREEN.SPRITE       ( text_addr* char_code* )
+    ;acorn_font/width ADD2                   ( text_addr* width_addr* )
+    LDA #00 SWP                              ( text_addr* char_width* )
+    !SCREEN.X ADD2 >SCREEN.X                 ( text_addr* // move x along )
+    INC2                                     ( text_addr* )
+    ,&loop JMP
+
+
+@get_text_width ( text_addr* -- width* )
+  #0000                                      ( text_addr* width* )
+  &loop
+    OVR2 LDA                                 ( text_addr* width* ascii )
+    DUP ,&cont JCN                           ( text_addr* width* ascii )
+  &end
+    POP NIP2 RETURN
+  &cont
+    #20 SUB #00 SWP                          ( text_addr* width* char_code* )
+    ;acorn_font/width ADD2                   ( text_addr* width* width_addr* )
+    LDA #00 SWP                              ( text_addr* width* char_width* )
+    ADD2                                     ( text_addr* width* )
+    SWP2 INC2 SWP2                           ( text_addr* width* )
+    ,&loop JMP
+
+
+@draw_button ( colour width* text_addr* -- )
+  ,&text_addr STR2                           ( sprite_colour width* // store text_addr )
+  STH2 DUP ,&sprite_colour STR #02 SFT STH2r ( pixel_colour width* // store colour )
+  DUP2 ,&button_width STR2                   ( colour width* // store button width )
+  #000b ;draw_capsule CALL                   ( -- )
+  !SCREEN.Y #0002 ADD2 >SCREEN.Y             ( // move down to top of text )
+  !SCREEN.X ,&start_x STR2                   ( -- )
+
+  [ LIT &sprite_colour $1 ]
+  [ LIT2 &text_addr $2 ]
+  [ LIT2 &button_width $2 ]                  ( sprite_colour text_addr* button_width* )
+
+  OVR2 ;get_text_width CALL                  ( sprite_colour text_addr* button_width* text_width* )
+  SUB2 HALF2                                 ( sprite_colour text_addr* text_x_offset* )
+  !SCREEN.X ADD2 >SCREEN.X                   ( sprite_colour text_addr* )
+  ;draw_text CALL
+
+  !SCREEN.Y #0002 SUB2 >SCREEN.Y
+  [ LIT2 &start_x $2 ]  >SCREEN.X
+  RETURN
+
+
+@draw_capsule ( colour width* height* -- )
+  !SCREEN.Y ,&start_y STR2
+  NIP #02 SUB ROT ROT                        ( colour counter width* )
+  DUP2 ,&width STR2                          ( colour counter width* )
+  #0002 SUB2 ,&short_width STR2              ( colour counter )
+  &loop
+    INC_Y                                    ( colour counter // move to next line )
+    SWP DUP [ LIT2 &width $2 ]               ( counter colour colour width* )
+    ;draw_horizontal_line CALL SWP           ( colour counter )
+    DEC DUP ,&loop JCN                       ( colour counter )
+  POP INC_X INC_Y                            ( colour // move to bottom line )
+  DUP [ LIT2 &short_width $2 ]               ( colour colour short_width* )
+  OVR2 OVR2 ROT POP                          ( colour colour short_width* colour short_width* )
+  ;draw_horizontal_line CALL                 ( colour colour short_width* // draw bottom line )
+  [ LIT2 &start_y $2 ]  >SCREEN.Y            ( colour colour short_width* // move to top line )
+  ;draw_horizontal_line CALL                 ( colour // draw top line )
+  POP DEC_X                                  ( -- // return to start )
   RETURN
 
 
@@ -465,102 +504,102 @@ BRK
 0708 0707 0607 0708
 0707 0705 0205 0808 
 &characters
-0000 0000 0000 0000
-60f0 f060 6000 6000
-a0a0 0000 0000 0000
-6c6c fe6c fe6c 6c00
-107c e07c 0e7c 1000
-cccc 1830 60cc cc00
-70d8 d870 dacc 7600
-8080 0000 0000 0000
-3060 c0c0 c060 3000
-c060 3030 3060 c000
-6c38 fe38 6c00 0000
-0030 30fc 3030 0000
-0000 0000 0060 60c0
-0000 00f0 0000 0000
-0000 0000 00c0 c000
-0c18 1830 3060 60c0
-78cc dcfc eccc 7800
-60e0 6060 6060 f000
-78cc 0c38 60c4 fc00
-78cc 0c38 0ccc 7800
-1838 78d8 fc18 1800
-fcc0 f81c 0ccc 7800
-3860 c0f8 cccc 7800
-fc0c 1830 6060 6000
-78cc cc78 cccc 7800
-78cc cc7c 0c18 7000
-00c0 c000 00c0 c000
-0060 6000 0060 60c0
-1830 60c0 6030 1800
-0000 f000 f000 0000
-c060 3018 3060 c000
-78cc 1830 3000 3000
-78cc dcd4 dcc0 7800
-78cc cccc fccc cc00
-f8cc ccf8 cccc f800
-78cc c0c0 c0cc 7800
-f8cc cccc cccc f800
-f8c0 c0f0 c0c0 f800
-f8c0 c0f0 c0c0 c000
-78cc c0dc cccc 7800
-cccc ccfc cccc cc00
-f060 6060 6060 f000
-7c18 1818 18d8 7000
-cccc d8f0 d8cc cc00
-c0c0 c0c0 c0c0 f800
-c6ee ded6 d6c6 c600
-c6e6 f6de cec6 c600
-78cc cccc cccc cc78
-f8cc cccc f8c0 c000
-78cc cccc d4d8 6c00
-f8cc ccf8 cccc cc00
-78cc c078 0ccc 7800
-fc30 3030 3030 3000
-cccc cccc cccc 7800
-cccc cccc cc78 3000
-c6c6 c6d6 d6fe 6c00
-cccc 7830 78cc cc00
-cccc cc78 3030 3000
-fc1c 3830 70e0 fc00
-f0c0 c0c0 c0c0 f000
-c060 6030 3018 180c
-f030 3030 3030 f000
-3071 cc84 0000 0000
-0000 0000 0000 f800
-c060 0000 0000 0000
-0000 780c 7ccc 7c00
-c0c0 f8cc cccc f800
-0000 78cc c0cc 7800
-0c0c 7ccc cccc 7c00
-0000 78cc fcc0 7800
-3860 60f8 6060 6000
-0000 7ccc cc7c 0c78
-c0c0 f8cc cccc cc00
-6000 e060 6060 f000
-3000 7030 3030 30e0
-c0c0 ccd8 f0d8 cc00
-e060 6060 6060 f000
-0000 6cfe d6d6 c600
-0000 f8cc cccc cc00
-0000 78cc cccc 7800
-0000 f8cc ccf8 c0c0
-0000 7ccc cc7c 0c0e
-0000 d8ec c0c0 c000
-0000 7ce0 781c f800
-6060 f860 6060 3800
-0000 cccc cccc 7800
-0000 cccc cc78 3000
-0000 c6d6 d6fe 6c00
-0000 cc78 3078 cc00
-0000 cccc cc7c 0c78
-0000 fc18 3060 fc00
-3060 60c0 6060 3000
-8080 8080 8080 8000
-c060 6030 6060 c000
-0000 62d6 8c00 0000
-2514 2189 4125 1426
+0000 0000 0000 0000  (   )
+60f0 f060 6000 6000  ( ! )
+a0a0 0000 0000 0000  ( " )
+6c6c fe6c fe6c 6c00  ( # )
+107c e07c 0e7c 1000  ( $ )
+cccc 1830 60cc cc00  ( % )
+70d8 d870 dacc 7600  ( & )
+8080 0000 0000 0000  ( ' )
+3060 c0c0 c060 3000  ( ( )
+c060 3030 3060 c000  ( ) )
+6c38 fe38 6c00 0000  ( * )
+0030 30fc 3030 0000  ( + )
+0000 0000 0060 60c0  ( , )
+0000 00f0 0000 0000  ( - )
+0000 0000 00c0 c000  ( . )
+0c18 1830 3060 60c0  ( / )
+78cc dcfc eccc 7800  ( 0 )
+60e0 6060 6060 f000  ( 1 )
+78cc 0c38 60c4 fc00  ( 2 )
+78cc 0c38 0ccc 7800  ( 3 )
+1838 78d8 fc18 1800  ( 4 )
+fcc0 f81c 0ccc 7800  ( 5 )
+3860 c0f8 cccc 7800  ( 6 )
+fc0c 1830 6060 6000  ( 7 )
+78cc cc78 cccc 7800  ( 8 )
+78cc cc7c 0c18 7000  ( 9 )
+00c0 c000 00c0 c000  ( : )
+0060 6000 0060 60c0  ( ; )
+1830 60c0 6030 1800  ( < )
+0000 f000 f000 0000  ( = )
+c060 3018 3060 c000  ( > )
+78cc 1830 3000 3000  ( ? )
+78cc dcd4 dcc0 7800  ( @ )
+78cc cccc fccc cc00  ( A )
+f8cc ccf8 cccc f800  ( B )
+78cc c0c0 c0cc 7800  ( C )
+f8cc cccc cccc f800  ( D )
+f8c0 c0f0 c0c0 f800  ( E )
+f8c0 c0f0 c0c0 c000  ( F )
+78cc c0dc cccc 7800  ( G )
+cccc ccfc cccc cc00  ( H )
+f060 6060 6060 f000  ( I )
+7c18 1818 18d8 7000  ( J )
+cccc d8f0 d8cc cc00  ( K )
+c0c0 c0c0 c0c0 f800  ( L )
+c6ee fed6 d6c6 c600  ( M )
+c6e6 f6de cec6 c600  ( N )
+78cc cccc cccc 7800  ( O )
+f8cc cccc f8c0 c000  ( P )
+78cc cccc d4d8 6c00  ( Q )
+f8cc ccf8 cccc cc00  ( R )
+78cc c078 0ccc 7800  ( S )
+fc30 3030 3030 3000  ( T )
+cccc cccc cccc 7800  ( U )
+cccc cccc cc78 3000  ( V )
+c6c6 c6d6 d6fe 6c00  ( W )
+cccc 7830 78cc cc00  ( X )
+cccc cc78 3030 3000  ( Y )
+fc1c 3830 70e0 fc00  ( Z )
+f0c0 c0c0 c0c0 f000  ( [ )
+c060 6030 3018 180c  ( \ )
+f030 3030 3030 f000  ( ] )
+3071 cc84 0000 0000  ( ^ )
+0000 0000 0000 f800  ( _ )
+c060 0000 0000 0000  ( ` )
+0000 780c 7ccc 7c00  ( a )
+c0c0 f8cc cccc f800  ( b )
+0000 78cc c0cc 7800  ( c )
+0c0c 7ccc cccc 7c00  ( d )
+0000 78cc fcc0 7800  ( e )
+3860 60f8 6060 6000  ( f )
+0000 7ccc cc7c 0c78  ( g )
+c0c0 f8cc cccc cc00  ( h )
+6000 e060 6060 f000  ( i )
+3000 7030 3030 30e0  ( j )
+c0c0 ccd8 f0d8 cc00  ( k )
+e060 6060 6060 f000  ( l )
+0000 6cfe d6d6 c600  ( m )
+0000 f8cc cccc cc00  ( n )
+0000 78cc cccc 7800  ( o )
+0000 f8cc ccf8 c0c0  ( p )
+0000 7ccc cc7c 0c0e  ( q )
+0000 d8ec c0c0 c000  ( r )
+0000 7ce0 781c f800  ( s )
+6060 f860 6060 3800  ( t )
+0000 cccc cccc 7800  ( u )
+0000 cccc cc78 3000  ( v )
+0000 c6d6 d6fe 6c00  ( w )
+0000 cc78 3078 cc00  ( x )
+0000 cccc cc7c 0c78  ( y )
+0000 fc18 3060 fc00  ( z )
+3060 60c0 6060 3000  ( { )
+8080 8080 8080 8000  ( | )
+c060 6030 6060 c000  ( } )
+0000 62d6 8c00 0000  ( ~ )
+2514 2189 4125 1426  (   )
 
 
 
