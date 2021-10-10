@@ -4,6 +4,7 @@
 %SYSTEM.BLUE       { #0c }
 %SYSTEM.DEBUG      { #0e }
 %SYSTEM.HALT       { #0f }
+%SCREEN.VECTOR     { #20 }
 %SCREEN.WIDTH      { #22 }
 %SCREEN.HEIGHT     { #24 }
 %SCREEN.X          { #28 }
@@ -33,6 +34,7 @@
 %>SYSTEM.RED        { SYSTEM.RED DEO2 }
 %>SYSTEM.GREEN      { SYSTEM.GREEN DEO2 }
 %>SYSTEM.BLUE       { SYSTEM.BLUE DEO2 }
+%>SCREEN.VECTOR     { SCREEN.VECTOR DEO2 }
 %>SCREEN.X          { SCREEN.X DEO2 }
 %>SCREEN.Y          { SCREEN.Y DEO2 }
 %>SCREEN.ADDR       { SCREEN.ADDR DEO2 }
@@ -95,7 +97,8 @@
 |0100
   ;initialise_program CALL
   ;draw_splash_screen CALL
-  HALT
+  ;draw_create_image_screen CALL
+  BRK
   ( ;draw_workspace CALL )
   #02 ;fill_screen CALL
   ;draw_cursor CALL
@@ -143,25 +146,28 @@ BRK
   POP2 RETURN
 
 
-
+@colour_scheme_1
+  f022 e188 a244
+  f023 e188 a245
+  f025 e189 a246
+  f023 e188 a245
 
 
 @initialise_program ( -- )
   #f02b #e18a #a24d ;set_colours CALL
   !SCREEN.WIDTH #0023 SUB2 >canvas_width
-  !SCREEN.HEIGHT #0023 SUB2 >canvas_height
-  #0002 >cursor_x
-  #0002 >cursor_y
-  SCREEN.WIDTH DEI2 HALF2 >center_x
-  SCREEN.HEIGHT DEI2 HALF2 >center_y
+  !SCREEN.HEIGHT #0023 SUB2 >canvas_height   
+  !SCREEN.WIDTH HALF2 >center_x
+  !SCREEN.HEIGHT HALF2 >center_y
   !center_x !canvas_width HALF2 SUB2 >canvas_x
   !center_y !canvas_height HALF2 SUB2 >canvas_y
-  ;on_controller CONTROLLER.VECTOR DEO2
-  ;on_mouse MOUSE.VECTOR DEO2
+  ;on_controller >CONTROLLER.VECTOR
+  ;on_mouse >MOUSE.VECTOR
+  ;on_screen >SCREEN.VECTOR
   RETURN
 
 @draw_splash_screen ( -- )
-  ( Draw frame )
+  #00 ;fill_screen CALL
   !center_x #0040 SUB2 >SCREEN.X
   !center_y #0030 SUB2 >SCREEN.Y
   #01 #0080 #0060 ;draw_filled_rect CALL
@@ -173,12 +179,76 @@ BRK
   ( Draw buttons )
   !center_x #0032 SUB2 >SCREEN.X
   !center_y #0008 ADD2 >SCREEN.Y
-  #08 #0064 ;&button_1_text ;draw_button CALL
+  #0c #0064 ;&button_1_text ;draw_button CALL
   !SCREEN.Y #000c ADD2 >SCREEN.Y
   #08 #0064 ;&button_2_text ;draw_button CALL
   RETURN
   &button_1_text "Create 20 "image 00
   &button_2_text "Load 20 "image 00
+
+@draw_create_image_screen ( -- )
+  #00 ;fill_screen CALL
+  !center_x #0040 SUB2 >SCREEN.X
+  !center_y #0030 SUB2 >SCREEN.Y
+  #01 #0080 #0060 ;draw_filled_rect CALL
+  DEC_X DEC_Y
+  #02 #0082 #0062 ;draw_rect CALL
+  #0002 DUP2 SUB_X SUB_Y
+  #02 #0086 #0066 ;draw_rect CALL
+
+
+  ;&arrow_sprite >SCREEN.ADDR
+  !center_x #003c SUB2 >SCREEN.X
+  !center_y #002c SUB2 >SCREEN.Y
+  #02 #000a #000a ;draw_capsule CALL
+  INC_X INC_Y
+  #08 >SCREEN.SPRITE
+
+  !center_x #0023 SUB2 >SCREEN.X
+  !center_y #002a SUB2 >SCREEN.Y
+  #04 ;&title_text ;draw_text CALL
+
+  ( Colour mode )
+  !center_x #0032 SUB2 >SCREEN.X
+  !center_y #0018 SUB2 >SCREEN.Y
+  #00 #0064 #000d ;draw_capsule CALL
+  INC_X INC_Y
+  #08 #0030 ;&1_bit_text ;draw_button CALL
+  #0032 ADD_X
+  #02 #0030 ;&2_bit_text ;draw_button CALL
+
+  ( Width )
+  !center_x #0032 SUB2 >SCREEN.X
+  !center_y #0008 SUB2 >SCREEN.Y
+  #04 ;&width_text ;draw_text CALL
+  !center_x #0003 ADD2 >SCREEN.X
+  #0002 SUB_Y
+  #0c #002f ;&width_value ;draw_button CALL
+
+  ( Height )
+  !center_x #0032 SUB2 >SCREEN.X
+  !center_y #0004 ADD2 >SCREEN.Y
+  #04 ;&height_text ;draw_text CALL
+  !center_x #0003 ADD2 >SCREEN.X
+  #0002 SUB_Y
+  #08 #002f ;&height_value ;draw_button CALL
+
+  ( CONFIRM )
+  !center_x #0032 SUB2 >SCREEN.X
+  !center_y #001b ADD2 >SCREEN.Y
+  #08 #0064 ;&confirm_text ;draw_button CALL
+
+  RETURN
+  &title_text "CREATE 20 "IMAGE 00
+  &confirm_text "CONFIRM 00
+  &arrow_sprite 1830 60ff ff60 3018
+  &width_text "Width: 00
+  &height_text "Height: 00
+  &width_value "320 00
+  &height_value "240 00
+  &1_bit_text "1-bit 00
+  &2_bit_text "2-bit 00
+
 
 
 @draw_workspace ( -- )
@@ -304,6 +374,22 @@ BRK
     !cursor_x !cursor_y ;screen_coord_to_canvas CALL ;set_pixel CALL
   BRK
 
+@on_screen ( -- )
+  ;&counter LDA2k INC2 DUP2 ROT2 STA2                 ( counter* // increment the counter )
+  #03 SFT2 #0004 MOD2                                 ( 4-step-counter* )
+
+  #0006 MUL2    ( offset* )
+  ;colour_scheme_1 ADD2
+  ;load_colours CALL
+
+  BRK
+  &counter $2
+
+@load_colours ( colour_scheme_addr* -- )
+  LDA2k SWP2 INC2 INC2
+  LDA2k SWP2 INC2 INC2
+  LDA2 ;set_colours CALL
+  RETURN
 
 ( ------------------------------------------------------------------------------- )
 (                         D R A W I N G   R O U T I N E S                         )
