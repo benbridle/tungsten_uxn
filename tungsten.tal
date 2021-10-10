@@ -196,14 +196,15 @@ BRK
   #0002 DUP2 SUB_X SUB_Y
   #02 #0086 #0066 ;draw_rect CALL
 
-
-  ;&arrow_sprite >SCREEN.ADDR
+  ( Back button )
+  ;&back_sprite >SCREEN.ADDR
   !center_x #003c SUB2 >SCREEN.X
   !center_y #002c SUB2 >SCREEN.Y
   #02 #000a #000a ;draw_capsule CALL
   INC_X INC_Y
   #08 >SCREEN.SPRITE
 
+  ( "Create image" title )
   !center_x #0023 SUB2 >SCREEN.X
   !center_y #002a SUB2 >SCREEN.Y
   #04 ;&title_text ;draw_text CALL
@@ -219,15 +220,19 @@ BRK
 
   ( Width )
   !center_x #0032 SUB2 >SCREEN.X
-  !center_y #0008 SUB2 >SCREEN.Y
+  !center_y #0006 SUB2 >SCREEN.Y
   #04 ;&width_text ;draw_text CALL
   !center_x #0003 ADD2 >SCREEN.X
   #0002 SUB_Y
   #0c #002f ;&width_value ;draw_button CALL
+  ;&nudge_sprite >SCREEN.ADDR
+  #0002 ADD_Y
+  #0002 ADD_X #0c >SCREEN.SPRITE
+  #0023 ADD_X #1c >SCREEN.SPRITE
 
   ( Height )
   !center_x #0032 SUB2 >SCREEN.X
-  !center_y #0004 ADD2 >SCREEN.Y
+  !center_y #0006 ADD2 >SCREEN.Y
   #04 ;&height_text ;draw_text CALL
   !center_x #0003 ADD2 >SCREEN.X
   #0002 SUB_Y
@@ -236,12 +241,13 @@ BRK
   ( CONFIRM )
   !center_x #0032 SUB2 >SCREEN.X
   !center_y #001b ADD2 >SCREEN.Y
-  #08 #0064 ;&confirm_text ;draw_button CALL
+  #02 #0064 ;&confirm_text ;draw_button CALL
 
   RETURN
   &title_text "CREATE 20 "IMAGE 00
   &confirm_text "CONFIRM 00
-  &arrow_sprite 1830 60ff ff60 3018
+  &back_sprite 1830 60ff ff60 3018
+  &nudge_sprite 1030 70f0 7030 1000
   &width_text "Width: 00
   &height_text "Height: 00
   &width_value "320 00
