@@ -73,6 +73,7 @@
 
 %BREAK_IF_NOT  { #01 JCN BRK }
 %BREAKPOINT  { #0101 SYSTEM.DEBUG DEO2 }
+%BP          { #0101 SYSTEM.DEBUG DEO2 }
 %HALT  { #01 SYSTEM.HALT DEO }
 
 ( ------------------------------------------------------------------------------- )
@@ -229,6 +230,44 @@ BRK
   &2_bit_text "2-bit 00
 
 
+@draw_toggle ( bg_colour fg_colour width* text_addr_1* text_addr_2* active_index -- )
+
+@draw_numeric_input ( colour width* number* -- )
+  ( need to hold onto colour and width )
+(
+  ;convert_value_to_decimal_text CALL
+  {{colour}} {{width*}} {{text_addr*}} ;draw_button CALL
+  ;&arrow_sprite >SCREEN.ADDR
+  #0002 ADD_Y
+  #0002 ADD_X {{colour}} >SCREEN.SPRITE
+  #0023 ADD_X {{colour+#10}} >SCREEN.SPRITE
+  RETURN
+  &arrow_sprite 1030 70f0 7030 1000
+)
+
+
+@convert_value_to_decimal_text ( value* -- text_addr* )
+  ;&text_addr                                 ( value* digit_addr* )
+  OVR2 #000a LTH2 ,&parse JCN INC2           ( // jump if number has 1 digit  )
+  OVR2 #0064 LTH2 ,&parse JCN INC2           ( // jump if number has 2 digits )
+  OVR2 #03e8 LTH2 ,&parse JCN INC2           ( // jump if number has 3 digits )
+  OVR2 #2710 LTH2 ,&parse JCN INC2           ( // jump if number has 4 digits )
+
+  &parse
+    DUP2 INC2 #00 ROT ROT                    ( value* digit_addr* 00 null_addr* )
+    STA SWP2                                 ( digit_addr* value* )
+  &loop
+    DUP2 #000a MOD2                          ( digit_addr* value* remainder* )
+    SWP2 #000a DIV2 SWP2                     ( digit_addr* value* remainder* )
+    NIP #30 ADD DUP                          ( digit_addr* value* ascii* )
+    ROT2 SWP2                                ( value* digit_addr* ascii* )
+    OVR2 ROT POP                             ( value* digit_addr* ascii digit_addr* )
+    STA DEC2 SWP2                            ( digit_addr* value* )
+    OVR2 INC2 ;&text_addr NEQ2 ,&loop JCN
+  POP2 INC2 RETURN                           ( text_addr* )
+  &text_addr $5 00
+
+
 @draw_workspace ( -- )
   #02 ;fill_screen CALL
   ;draw_canvas CALL
@@ -317,7 +356,7 @@ BRK
 
 
 @update_button_states ( -- )
-  !CONTROLLER.BUTTON DUP DUP DUP             ( held held held held )
+  !CONTROLLER.BUTTON DUP DUP2                ( held held held held )
   !button_held                               ( held held held held prev_held )
   EOR AND                                    ( held held leading_edge )
   DUP ROT EOR                                ( held leading_edge falling_edge )
