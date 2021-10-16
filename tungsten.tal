@@ -73,7 +73,7 @@
 
 %BREAK_IF_NOT  { #01 JCN BRK }
 %BREAKPOINT  { #0101 SYSTEM.DEBUG DEO2 }
-%BP          { #0101 SYSTEM.DEBUG DEO2 }
+%DEBUG { #00 ;fill_screen CALL BREAKPOINT }
 %HALT  { #01 SYSTEM.HALT DEO }
 
 ( ------------------------------------------------------------------------------- )
@@ -110,35 +110,17 @@
 (                             M A I N   P R O G R A M                             )
 
 |0100
-  ;initialise_program CALL
-  ;draw_splash_screen CALL
-  ;draw_create_image_screen CALL
-  BRK
-  ( ;draw_workspace CALL )
-  #02 ;fill_screen CALL
-  ;draw_cursor CALL
-BRK
-
-
-@colour_scheme_1
-  f022 e188 a244
-  f023 e188 a245
-  f025 e189 a246
-  f023 e188 a245
-
-
-@initialise_program ( -- )
-  #f02b #e18a #a24d ;set_colours CALL
-  !SCREEN.WIDTH #0023 SUB2 >canvas_width
-  !SCREEN.HEIGHT #0023 SUB2 >canvas_height   
   !SCREEN.WIDTH HALF2 >center_x
   !SCREEN.HEIGHT HALF2 >center_y
-  !center_x !canvas_width HALF2 SUB2 >canvas_x
-  !center_y !canvas_height HALF2 SUB2 >canvas_y
+  #f02b #e18a #a24d ;set_colours CALL
+
   ;on_controller >CONTROLLER.VECTOR
   ;on_mouse >MOUSE.VECTOR
   ;on_screen >SCREEN.VECTOR
-  RETURN
+
+  ;draw_splash_screen CALL
+BRK
+
 
 @draw_splash_screen ( -- )
   #00 ;fill_screen CALL
@@ -171,12 +153,9 @@ BRK
   #02 #0086 #0066 ;draw_rect CALL
 
   ( Back button )
-  ;&back_sprite >SCREEN.ADDR
   !center_x #003c SUB2 >SCREEN.X
   !center_y #002c SUB2 >SCREEN.Y
-  #02 #000a #000a ;draw_capsule CALL
-  INC_X INC_Y
-  #08 >SCREEN.SPRITE
+  #08 ;&back_sprite ;draw_icon_button CALL
 
   ( "Create image" title )
   !center_x #0023 SUB2 >SCREEN.X
@@ -186,31 +165,21 @@ BRK
   ( Colour mode )
   !center_x #0032 SUB2 >SCREEN.X
   !center_y #0018 SUB2 >SCREEN.Y
-  #00 #0064 #000d ;draw_capsule CALL
-  INC_X INC_Y
-  #08 #0030 ;&1_bit_text ;draw_button CALL
-  #0032 ADD_X
-  #02 #0030 ;&2_bit_text ;draw_button CALL
+  #02 #08 #0064 ;&1_bit_text ;&2_bit_text #00 ;draw_toggle CALL
 
-  ( Width )
+  ( Width/height labels )
   !center_x #0032 SUB2 >SCREEN.X
   !center_y #0006 SUB2 >SCREEN.Y
   #04 ;&width_text ;draw_text CALL
-  !center_x #0003 ADD2 >SCREEN.X
-  #0002 SUB_Y
-  #0c #002f ;&width_value ;draw_button CALL
-  ;&nudge_sprite >SCREEN.ADDR
-  #0002 ADD_Y
-  #0002 ADD_X #0c >SCREEN.SPRITE
-  #0023 ADD_X #1c >SCREEN.SPRITE
-
-  ( Height )
-  !center_x #0032 SUB2 >SCREEN.X
-  !center_y #0006 ADD2 >SCREEN.Y
+  #000c ADD_Y
   #04 ;&height_text ;draw_text CALL
+
+  ( Width/height inputs )
   !center_x #0003 ADD2 >SCREEN.X
-  #0002 SUB_Y
-  #08 #002f ;&height_value ;draw_button CALL
+  !center_y #0008 SUB2 >SCREEN.Y
+  #0c #002f #0140 ;draw_numeric_input CALL
+  #000c ADD_Y
+  #08 #002f #00f0 ;draw_inactive_numeric_input CALL
 
   ( CONFIRM )
   !center_x #0032 SUB2 >SCREEN.X
@@ -221,51 +190,12 @@ BRK
   &title_text "CREATE 20 "IMAGE 00
   &confirm_text "CONFIRM 00
   &back_sprite 1830 60ff ff60 3018
-  &nudge_sprite 1030 70f0 7030 1000
   &width_text "Width: 00
   &height_text "Height: 00
   &width_value "320 00
   &height_value "240 00
   &1_bit_text "1-bit 00
   &2_bit_text "2-bit 00
-
-
-@draw_toggle ( bg_colour fg_colour width* text_addr_1* text_addr_2* active_index -- )
-
-@draw_numeric_input ( colour width* number* -- )
-  ( need to hold onto colour and width )
-(
-  ;convert_value_to_decimal_text CALL
-  {{colour}} {{width*}} {{text_addr*}} ;draw_button CALL
-  ;&arrow_sprite >SCREEN.ADDR
-  #0002 ADD_Y
-  #0002 ADD_X {{colour}} >SCREEN.SPRITE
-  #0023 ADD_X {{colour+#10}} >SCREEN.SPRITE
-  RETURN
-  &arrow_sprite 1030 70f0 7030 1000
-)
-
-
-@convert_value_to_decimal_text ( value* -- text_addr* )
-  ;&text_addr                                 ( value* digit_addr* )
-  OVR2 #000a LTH2 ,&parse JCN INC2           ( // jump if number has 1 digit  )
-  OVR2 #0064 LTH2 ,&parse JCN INC2           ( // jump if number has 2 digits )
-  OVR2 #03e8 LTH2 ,&parse JCN INC2           ( // jump if number has 3 digits )
-  OVR2 #2710 LTH2 ,&parse JCN INC2           ( // jump if number has 4 digits )
-
-  &parse
-    DUP2 INC2 #00 ROT ROT                    ( value* digit_addr* 00 null_addr* )
-    STA SWP2                                 ( digit_addr* value* )
-  &loop
-    DUP2 #000a MOD2                          ( digit_addr* value* remainder* )
-    SWP2 #000a DIV2 SWP2                     ( digit_addr* value* remainder* )
-    NIP #30 ADD DUP                          ( digit_addr* value* ascii* )
-    ROT2 SWP2                                ( value* digit_addr* ascii* )
-    OVR2 ROT POP                             ( value* digit_addr* ascii digit_addr* )
-    STA DEC2 SWP2                            ( digit_addr* value* )
-    OVR2 INC2 ;&text_addr NEQ2 ,&loop JCN
-  POP2 INC2 RETURN                           ( text_addr* )
-  &text_addr $5 00
 
 
 @draw_workspace ( -- )
@@ -417,6 +347,116 @@ BRK
   BRK
   &counter $2
 
+( ------------------------------------------------------------------------------- )
+(                    C O N V E R S I O N   P R O C E D U R E S                    )
+
+@convert_short_to_decimal_string ( value* -- text_addr* )
+  ;&text_addr                                 ( value* digit_addr* )
+  OVR2 #000a LTH2 ,&parse JCN INC2           ( // jump if number has 1 digit  )
+  OVR2 #0064 LTH2 ,&parse JCN INC2           ( // jump if number has 2 digits )
+  OVR2 #03e8 LTH2 ,&parse JCN INC2           ( // jump if number has 3 digits )
+  OVR2 #2710 LTH2 ,&parse JCN INC2           ( // jump if number has 4 digits )
+
+  &parse
+    DUP2 INC2 #00 ROT ROT                    ( value* digit_addr* 00 null_addr* )
+    STA SWP2                                 ( digit_addr* value* )
+  &loop
+    DUP2 #000a MOD2                          ( digit_addr* value* remainder* )
+    SWP2 #000a DIV2 SWP2                     ( digit_addr* value* remainder* )
+    NIP #30 ADD DUP                          ( digit_addr* value* ascii* )
+    ROT2 SWP2                                ( value* digit_addr* ascii* )
+    OVR2 ROT POP                             ( value* digit_addr* ascii digit_addr* )
+    STA DEC2 SWP2                            ( digit_addr* value* )
+    OVR2 INC2 ;&text_addr NEQ2 ,&loop JCN
+  POP2 INC2 RETURN                           ( text_addr* )
+  &text_addr $5 00
+
+
+
+( ------------------------------------------------------------------------------- )
+(                  U S E R   I N T E R F A C E   E L E M E N T S                  )
+
+@draw_button ( colour width* text_addr* -- )
+  ,&text_addr STR2                           ( sprite_colour width* // store text_addr )
+  STH2 DUP ,&sprite_colour STR #02 SFT STH2r ( pixel_colour width* // store colour )
+  DUP2 ,&button_width STR2                   ( colour width* // store button width )
+  #000b ;draw_capsule CALL                   ( -- )
+  !SCREEN.Y #0002 ADD2 >SCREEN.Y             ( // move down to top of text )
+  !SCREEN.X ,&start_x STR2                   ( -- )
+
+  [ LIT &sprite_colour $1 ]
+  [ LIT2 &text_addr $2 ]
+  [ LIT2 &button_width $2 ]                  ( sprite_colour text_addr* button_width* )
+
+  OVR2 ;get_text_width CALL                  ( sprite_colour text_addr* button_width* text_width* )
+  SUB2 HALF2                                 ( sprite_colour text_addr* text_x_offset* )
+  !SCREEN.X ADD2 >SCREEN.X                   ( sprite_colour text_addr* )
+  ;draw_text CALL
+
+  !SCREEN.Y #0002 SUB2 >SCREEN.Y
+  [ LIT2 &start_x $2 ]  >SCREEN.X
+  RETURN
+
+
+@draw_icon_button ( colour sprite_addr* -- )
+  >SCREEN.ADDR
+  DUP #02 SFT #000a #000a ;draw_capsule CALL
+  INC_X INC_Y
+  >SCREEN.SPRITE
+  DEC_X DEC_Y
+  RETURN
+
+
+@draw_toggle ( bg_colour fg_colour width* text_addr_1* text_addr_2* value -- )
+  !SCREEN.X ,&start_x STR2                   ( ... )
+  !SCREEN.Y ,&start_y STR2                   ( ... )
+  STH                                        ( ... | value )
+  ,&text_addr_2 STR2 ,&text_addr_1 STR2      ( bg fg width* | value )
+  DUP2 #0004 SUB2 #01 SFT2                   ( bg fg width* half_width* | value )
+  ,&half_width STR2                          ( bg fg width* | value )
+  DUP2 #0001 AND2 ,&spacer STR2              ( // more padding for odd widths )
+  ,&width STR2                               ( bg fg | value )
+  OVR STHr                                   ( bg fg bg value )
+  JMP SWP                                    ( bg fg bg // swap if value is 00 )
+  ,&left_colour STR ,&right_colour STR       ( bg )
+
+  #02 SFT [ LIT2 &width $2 ]                 ( pixel_colour* width* )
+  #000d ;draw_capsule CALL                   ( // draw the full background )
+  INC_X INC_Y
+  [ LIT &left_colour $1 ] ,&half_width LDR2  
+  [ LIT2 &text_addr_1 $2 ] ;draw_button CALL
+  ,&half_width LDR2 #0002 ADD2 [ LIT2 &spacer $2 ] ADD2 ADD_X
+  [ LIT &right_colour $1 ] ,&half_width LDR2 
+  [ LIT2 &text_addr_2 $2 ] ;draw_button CALL
+  [ LIT2 &start_x $2 ] [ LIT2 &start_y $2 ]
+  >SCREEN.Y >SCREEN.X
+  RETURN
+  &half_width $2
+
+
+@draw_numeric_input ( colour width* number* -- )
+  !SCREEN.X ,&start_x STR2
+  STH2 STH2                                  ( colour | width* number* )
+  DUP ,&colour STR STH2r                     ( colour width* | number* )
+  DUP2 ,&width STR2 STH2r                    ( colour width* number* )
+  ;convert_short_to_decimal_string CALL      ( colour width* text_addr* )
+  ;draw_button CALL                          ( -- )
+  ;&arrow_sprite >SCREEN.ADDR
+  #0002 ADD_Y #0002 ADD_X                    ( // position cursor for left-arrow )
+  ,&colour LDR >SCREEN.SPRITE                ( // draw left arrow )
+  ,&width LDR2 #000c SUB2 ADD_X              ( // position cursor for right-arrow )
+  ,&colour LDR #10 ORA >SCREEN.SPRITE        ( // #10 is horizontal-flip )
+  [ LIT2 &start_x $2 ] >SCREEN.X
+  #0002 SUB_Y
+  RETURN
+  &colour $1  &width $2
+  &arrow_sprite 1030 70f0 7030 1000
+
+
+@draw_inactive_numeric_input ( colour width* number* -- )
+  ;convert_short_to_decimal_string CALL      ( colour width* text_addr* )
+  ;draw_button CALL                          ( -- )
+  RETURN
 
 ( ------------------------------------------------------------------------------- )
 (                         D R A W I N G   R O U T I N E S                         )
@@ -580,28 +620,6 @@ BRK
     ,&loop JMP
 
 
-@draw_button ( colour width* text_addr* -- )
-  ,&text_addr STR2                           ( sprite_colour width* // store text_addr )
-  STH2 DUP ,&sprite_colour STR #02 SFT STH2r ( pixel_colour width* // store colour )
-  DUP2 ,&button_width STR2                   ( colour width* // store button width )
-  #000b ;draw_capsule CALL                   ( -- )
-  !SCREEN.Y #0002 ADD2 >SCREEN.Y             ( // move down to top of text )
-  !SCREEN.X ,&start_x STR2                   ( -- )
-
-  [ LIT &sprite_colour $1 ]
-  [ LIT2 &text_addr $2 ]
-  [ LIT2 &button_width $2 ]                  ( sprite_colour text_addr* button_width* )
-
-  OVR2 ;get_text_width CALL                  ( sprite_colour text_addr* button_width* text_width* )
-  SUB2 HALF2                                 ( sprite_colour text_addr* text_x_offset* )
-  !SCREEN.X ADD2 >SCREEN.X                   ( sprite_colour text_addr* )
-  ;draw_text CALL
-
-  !SCREEN.Y #0002 SUB2 >SCREEN.Y
-  [ LIT2 &start_x $2 ]  >SCREEN.X
-  RETURN
-
-
 @draw_capsule ( colour width* height* -- )
   !SCREEN.Y ,&start_y STR2
   NIP #02 SUB ROT ROT                        ( colour counter width* )
@@ -649,9 +667,18 @@ BRK
   &start_x $2
   &start_y $2
 
+( ------------------------------------------------------------------------------- )
+(                                     D A T A                                     )
+
+@colour_scheme_1
+  f022 e188 a244
+  f023 e188 a245
+  f025 e189 a246
+  f023 e188 a245
+
 
 @acorn_font
-&width
+  &width
 0405 0408 0807 0802
 0505 0807 0405 0307
 0705 0707 0707 0707
@@ -664,7 +691,7 @@ BRK
 0705 0507 0508 0707
 0708 0707 0607 0708
 0707 0705 0205 0808 
-&characters
+  &characters
 0000 0000 0000 0000  (   )
 60f0 f060 6000 6000  ( ! )
 a0a0 0000 0000 0000  ( " )
@@ -763,9 +790,9 @@ c060 6030 6060 c000  ( } )
 2514 2189 4125 1426  (   )
 
 
-
 @screen_buffer
-  aaaa 0000 aaaa 0000
-  aaaa 0000 aaaa 0000
-  aaaa 0000 aaaa 0000
-  aaaa 0000 aaaa 0000
+(
+  This label needs to be at the end of the
+  program, to ensure that there is enough
+  space for the largest possible canvas.
+)
