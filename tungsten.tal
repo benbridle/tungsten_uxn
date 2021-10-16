@@ -76,6 +76,12 @@
 %DEBUG { #00 ;fill_screen CALL BREAKPOINT }
 %HALT  { #01 SYSTEM.HALT DEO }
 
+%!IS_UP_PRESSED    { !button_pressed #10 AND }
+%!IS_DOWN_PRESSED  { !button_pressed #20 AND }
+%!IS_LEFT_PRESSED  { !button_pressed #40 AND }
+%!IS_RIGHT_PRESSED { !button_pressed #80 AND }
+
+
 ( ------------------------------------------------------------------------------- )
 (                         G L O B A L   V A R I A B L E S                         )
 
@@ -118,39 +124,64 @@
   ;on_mouse >MOUSE.VECTOR
   ;on_screen >SCREEN.VECTOR
 
-  ;draw_splash_screen CALL
+  ;launch_screen CALL
 BRK
 
 
-@draw_splash_screen ( -- )
+@draw_menu_background ( -- )
   #00 ;fill_screen CALL
   !center_x #0040 SUB2 >SCREEN.X
   !center_y #0030 SUB2 >SCREEN.Y
   #01 #0080 #0060 ;draw_filled_rect CALL
   DEC_X DEC_Y
   #02 #0082 #0062 ;draw_rect CALL
-  #0002 DUP2 SUB_X SUB_Y
+  !SCREEN.X #0002 SUB2 >SCREEN.X
+  !SCREEN.Y #0002 SUB2 >SCREEN.Y
   #02 #0086 #0066 ;draw_rect CALL
+  RETURN
 
-  ( Draw buttons )
+
+
+
+@launch_screen ( -- )
+  ;launch_screen__controller >CONTROLLER.VECTOR
+@launch_screen__draw
+  ;draw_menu_background CALL
   !center_x #0032 SUB2 >SCREEN.X
   !center_y #0008 ADD2 >SCREEN.Y
-  #0c #0064 ;&button_1_text ;draw_button CALL
+  #0c #08 ;launch_screen__vars/active_control LDA
+  JMP SWP
+
+  #0064 ;&button_1_text ;draw_button CALL
   !SCREEN.Y #000c ADD2 >SCREEN.Y
-  #08 #0064 ;&button_2_text ;draw_button CALL
+  #0064 ;&button_2_text ;draw_button CALL
   RETURN
   &button_1_text "Create 20 "image 00
   &button_2_text "Load 20 "image 00
+@launch_screen__controller
+  ;update_button_states CALL
+  !IS_UP_PRESSED ,&up JCN 
+  !IS_DOWN_PRESSED ,&down JCN
+  BRK
 
-@draw_create_image_screen ( -- )
-  #00 ;fill_screen CALL
-  !center_x #0040 SUB2 >SCREEN.X
-  !center_y #0030 SUB2 >SCREEN.Y
-  #01 #0080 #0060 ;draw_filled_rect CALL
-  DEC_X DEC_Y
-  #02 #0082 #0062 ;draw_rect CALL
-  #0002 DUP2 SUB_X SUB_Y
-  #02 #0086 #0066 ;draw_rect CALL
+  &up
+    #00 ;launch_screen__vars/active_control STA
+    ;reset_counter CALL
+    ;launch_screen__draw CALL BRK
+  &down
+    #01 ;launch_screen__vars/active_control STA
+    ;reset_counter CALL
+    ;launch_screen__draw CALL BRK
+@launch_screen__vars
+  &active_control 00
+
+
+@reset_counter
+  #0000 ;on_screen/counter STA2
+  RETURN
+
+@create_image_screen ( -- )
+  ;draw_menu_background CALL
 
   ( Back button )
   !center_x #003c SUB2 >SCREEN.X
@@ -671,9 +702,9 @@ BRK
 (                                     D A T A                                     )
 
 @colour_scheme_1
-  f022 e188 a244
-  f023 e188 a245
   f025 e189 a246
+  f023 e188 a245
+  f022 e188 a244
   f023 e188 a245
 
 
