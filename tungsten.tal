@@ -1,15 +1,19 @@
 ( ------------------------------------------------------------------------------- )
 (                        M A C R O   D E F I N I T I O N S                        )
 
-%CONSOLE.WRITE     { #18 }
 %SYSTEM.RED        { #08 }
 %SYSTEM.GREEN      { #0a }
 %SYSTEM.BLUE       { #0c }
 %SYSTEM.DEBUG      { #0e }
 %SYSTEM.HALT       { #0f }
+%CONSOLE.VECTOR    { #10 }
+%CONSOLE.READ      { #12 }
+%CONSOLE.WRITE     { #18 }
+%CONSOLE.ERROR     { #19 }
 %SCREEN.VECTOR     { #20 }
 %SCREEN.WIDTH      { #22 }
 %SCREEN.HEIGHT     { #24 }
+%SCREEN.AUTO       { #26 }
 %SCREEN.X          { #28 }
 %SCREEN.Y          { #2a }
 %SCREEN.ADDR       { #2c }
@@ -24,6 +28,7 @@
 %MOUSE.STATE       { #95 }
 %MOUSE.WHEEL       { #96 }
 
+%!CONSOLE.READ      { CONSOLE.READ DEI }
 %!SCREEN.WIDTH      { SCREEN.WIDTH DEI2 }
 %!SCREEN.HEIGHT     { SCREEN.HEIGHT DEI2 }
 %!SCREEN.X          { SCREEN.X DEI2 }
@@ -38,8 +43,15 @@
 %>SYSTEM.RED        { SYSTEM.RED DEO2 }
 %>SYSTEM.GREEN      { SYSTEM.GREEN DEO2 }
 %>SYSTEM.BLUE       { SYSTEM.BLUE DEO2 }
+%>SYSTEM.DEBUG      { SYSTEM.DEBUG DEO }
+%>SYSTEM.HALT       { SYSTEM.HALT DEO }
+%>CONSOLE.VECTOR    { CONSOLE.VECTOR DEO2 }
 %>CONSOLE.WRITE     { CONSOLE.WRITE DEO }
+%>CONSOLE.ERROR     { CONSOLE.ERROR DEO }
 %>SCREEN.VECTOR     { SCREEN.VECTOR DEO2 }
+%>SCREEN.WIDTH      { SCREEN.WIDTH DEO2 }
+%>SCREEN.HEIGHT     { SCREEN.HEIGHT DEO2 }
+%>SCREEN.AUTO       { SCREEN.AUTO DEO }
 %>SCREEN.X          { SCREEN.X DEO2 }
 %>SCREEN.Y          { SCREEN.Y DEO2 }
 %>SCREEN.ADDR       { SCREEN.ADDR DEO2 }
@@ -53,6 +65,7 @@
 %DEC      { #01 SUB }
 %DEC2     { #0001 SUB2 }
 %CALL     { JSR2 }
+%GOTO     { JMP2 }
 %RETURN   { JMP2r }
 %HALF2    { #01 SFT2 }
 %DOUBLE2  { #10 SFT2 }
@@ -76,11 +89,14 @@
 %DEBUG { #00 ;fill_screen CALL BREAKPOINT }
 %HALT  { #01 SYSTEM.HALT DEO }
 
-%!IS_UP_PRESSED    { !button_pressed #10 AND }
-%!IS_DOWN_PRESSED  { !button_pressed #20 AND }
-%!IS_LEFT_PRESSED  { !button_pressed #40 AND }
-%!IS_RIGHT_PRESSED { !button_pressed #80 AND }
-
+%!IS_UP_PRESSED     { !button_pressed #10 AND }
+%!IS_DOWN_PRESSED   { !button_pressed #20 AND }
+%!IS_LEFT_PRESSED   { !button_pressed #40 AND }
+%!IS_RIGHT_PRESSED  { !button_pressed #80 AND }
+%!IS_A_PRESSED      { !button_pressed #01 AND }
+%!IS_B_PRESSED      { !button_pressed #02 AND }
+%!IS_SELECT_PRESSED { !button_pressed #04 AND }
+%!IS_START_PRESSED  { !button_pressed #08 AND }
 
 ( ------------------------------------------------------------------------------- )
 (                         G L O B A L   V A R I A B L E S                         )
@@ -112,20 +128,20 @@
 %>button_held     { #12 STZ }
 %!button_held     { #12 LDZ }
 
+%>active_control { #13 STZ }
+%!active_control { #13 LDZ }
+
 ( ------------------------------------------------------------------------------- )
 (                             M A I N   P R O G R A M                             )
 
 |0100
+@program_start
   !SCREEN.WIDTH HALF2 >center_x
   !SCREEN.HEIGHT HALF2 >center_y
   #f02b #e18a #a24d ;set_colours CALL
-
-  ;on_controller >CONTROLLER.VECTOR
   ;on_mouse >MOUSE.VECTOR
   ;on_screen >SCREEN.VECTOR
-
-  ;launch_screen CALL
-BRK
+  ;launch_screen GOTO
 
 
 @draw_menu_background ( -- )
@@ -141,92 +157,181 @@ BRK
   RETURN
 
 
+@reset_scheme_counter
+  #0000 ;on_screen/counter STA2
+  RETURN
 
 
 @launch_screen ( -- )
   ;launch_screen__controller >CONTROLLER.VECTOR
+  #00 >active_control
 @launch_screen__draw
+  ;reset_scheme_counter CALL
   ;draw_menu_background CALL
+  !center_x #001c SUB2 >SCREEN.X
+  !center_y #0018 SUB2 >SCREEN.Y
+  #04 ;&title_text ;draw_text CALL
   !center_x #0032 SUB2 >SCREEN.X
   !center_y #0008 ADD2 >SCREEN.Y
-  #0c #08 ;launch_screen__vars/active_control LDA
-  JMP SWP
-
+  #0c #08 !active_control JMP SWP            ( // set button colours )
   #0064 ;&button_1_text ;draw_button CALL
   !SCREEN.Y #000c ADD2 >SCREEN.Y
   #0064 ;&button_2_text ;draw_button CALL
-  RETURN
+  BRK
+  &title_text "TUNGSTEN 00
   &button_1_text "Create 20 "image 00
   &button_2_text "Load 20 "image 00
 @launch_screen__controller
   ;update_button_states CALL
-  !IS_UP_PRESSED ,&up JCN 
+  !IS_UP_PRESSED ,&up JCN
   !IS_DOWN_PRESSED ,&down JCN
+  !IS_A_PRESSED ,&a JCN
   BRK
+  &up   #00 ,&set_active_control JMP
+  &down #01 ,&set_active_control JMP
+  &a
+    !active_control #04 JCN
+    ( 00 ) ;create_image_screen GOTO
+    ( 01 ) ;load_image_screen GOTO
+  &set_active_control ( control_index -- )
+    >active_control ;launch_screen__draw GOTO
 
-  &up
-    #00 ;launch_screen__vars/active_control STA
-    ;reset_counter CALL
-    ;launch_screen__draw CALL BRK
-  &down
-    #01 ;launch_screen__vars/active_control STA
-    ;reset_counter CALL
-    ;launch_screen__draw CALL BRK
-@launch_screen__vars
-  &active_control 00
-
-
-@reset_counter
-  #0000 ;on_screen/counter STA2
-  RETURN
 
 @create_image_screen ( -- )
+  ;create_image_screen__controller >CONTROLLER.VECTOR
+  #01 >active_control
+@create_image_screen__draw
+  ;reset_scheme_counter CALL
   ;draw_menu_background CALL
-
-  ( Back button )
+ ( Back button )
   !center_x #003c SUB2 >SCREEN.X
   !center_y #002c SUB2 >SCREEN.Y
-  #08 ;&back_sprite ;draw_icon_button CALL
-
-  ( "Create image" title )
+  #08 #0c #00 ;select_value CALL
+  ;&back_sprite ;draw_icon_button CALL
+ ( "Create image" title )
   !center_x #0023 SUB2 >SCREEN.X
   !center_y #002a SUB2 >SCREEN.Y
   #04 ;&title_text ;draw_text CALL
-
-  ( Colour mode )
+ ( Colour mode )
   !center_x #0032 SUB2 >SCREEN.X
   !center_y #0018 SUB2 >SCREEN.Y
-  #02 #08 #0064 ;&1_bit_text ;&2_bit_text #00 ;draw_toggle CALL
-
-  ( Width/height labels )
+  #02 #08 #0c #01 ;select_value CALL #0064
+  ;&1_bit_text ;&2_bit_text
+  ;create_image_screen__vars/colour_mode LDA
+  ;draw_toggle CALL
+ ( Width/height labels )
   !center_x #0032 SUB2 >SCREEN.X
   !center_y #0006 SUB2 >SCREEN.Y
   #04 ;&width_text ;draw_text CALL
   #000c ADD_Y
   #04 ;&height_text ;draw_text CALL
-
-  ( Width/height inputs )
+ ( Width/height inputs )
   !center_x #0003 ADD2 >SCREEN.X
   !center_y #0008 SUB2 >SCREEN.Y
-  #0c #002f #0140 ;draw_numeric_input CALL
+  #08 #0c #02 ;select_value CALL
+  #002f ;create_image_screen__vars/width LDA2
+  #02 ;is_active CALL ;draw_numeric_input CALL
   #000c ADD_Y
-  #08 #002f #00f0 ;draw_inactive_numeric_input CALL
-
-  ( CONFIRM )
+  #08 #0c #03 ;select_value CALL
+  #002f ;create_image_screen__vars/height LDA2
+  #03 ;is_active CALL ;draw_numeric_input CALL
+ ( CONFIRM )
   !center_x #0032 SUB2 >SCREEN.X
   !center_y #001b ADD2 >SCREEN.Y
-  #02 #0064 ;&confirm_text ;draw_button CALL
-
-  RETURN
+  #02 #03 #04 ;select_value CALL
+  #0064 ;&confirm_text ;draw_button CALL
+ BRK
   &title_text "CREATE 20 "IMAGE 00
   &confirm_text "CONFIRM 00
   &back_sprite 1830 60ff ff60 3018
   &width_text "Width: 00
   &height_text "Height: 00
-  &width_value "320 00
-  &height_value "240 00
   &1_bit_text "1-bit 00
   &2_bit_text "2-bit 00
+@create_image_screen__controller
+  ;update_button_states CALL
+  !IS_UP_PRESSED ,&up JCN
+  !IS_DOWN_PRESSED ,&down JCN
+  !IS_LEFT_PRESSED ,&left JCN
+  !IS_RIGHT_PRESSED ,&right JCN
+  !IS_A_PRESSED ;&a JCN2
+  BRK
+  &up
+    ;dec_active_control CALL
+    ;create_image_screen__draw GOTO
+  &down
+    #04 ;inc_active_control CALL
+    ;create_image_screen__draw GOTO
+  &left
+    !active_control #03 MUL JMP
+    ( 00 ) BRK $2
+    ( 01 ) ,&left__colour_mode JMP
+    ( 02 ) ,&left__width JMP
+    ( 03 ) ,&left__height JMP
+    ( 04 ) BRK $2
+    &left__colour_mode
+      #00 ;create_image_screen__vars/colour_mode STA
+      ;create_image_screen__draw GOTO
+    &left__width
+      ;create_image_screen__vars/width DUP2 LDA2 DEC2 SWP2 STA2
+      ;create_image_screen__draw GOTO
+    &left__height
+      ;create_image_screen__vars/height DUP2 LDA2 DEC2 SWP2 STA2
+      ;create_image_screen__draw GOTO
+  &right
+    !active_control #03 MUL JMP
+    ( 00 ) BRK $2
+    ( 01 ) ,&right__colour_mode JMP
+    ( 02 ) ,&right__width JMP
+    ( 03 ) ,&right__height JMP
+    ( 04 ) BRK $2
+    &right__colour_mode
+      #01 ;create_image_screen__vars/colour_mode STA
+      ;create_image_screen__draw GOTO
+    &right__width
+      ;create_image_screen__vars/width DUP2 LDA2 INC2 SWP2 STA2
+      ;create_image_screen__draw GOTO
+    &right__height
+      ;create_image_screen__vars/height DUP2 LDA2 INC2 SWP2 STA2
+      ;create_image_screen__draw GOTO
+  &a
+    !active_control #03 MUL JMP
+    ( 00 ) ,&a__back JMP
+    ( 01 ) ,&a__colour_mode JMP
+    ( 02 ) BRK $2
+    ( 03 ) BRK $2
+    ( 04 ) ,&a__continue JMP
+    &a__back
+      ;launch_screen GOTO
+    &a__colour_mode
+      ;create_image_screen__vars/colour_mode LDA #01 EOR
+      ;create_image_screen__vars/colour_mode STA
+      ;create_image_screen__draw GOTO
+    &a__continue
+      DEBUG
+@create_image_screen__vars
+  &colour_mode 00
+  &width 0140
+  &height 00f0
+
+
+
+@load_image_screen
+  DEBUG
+
+
+@select_value ( inactive active index -- colour )
+  !active_control EQU JMP SWP NIP RETURN
+@is_active ( index -- is_active )
+  !active_control EQU RETURN
+@inc_active_control ( max_control_index -- )
+  !active_control DUP ROT EQU JMP INC >active_control RETURN
+@dec_active_control ( -- )
+  !active_control DUP #00 EQU                ( active_control is_zero )
+  ,&cont JCN DEC                             ( active_control )
+  &cont >active_control RETURN               ( -- )
+
+
 
 
 @draw_workspace ( -- )
@@ -252,7 +357,7 @@ BRK
   DUP2 #0003 SUB2 >SCREEN.Y
   #f5 SCREEN.SPRITE DEO
   POP2 POP2 RETURN
-  @cursor_sprite 1c1c 08c0 e0c0 0000 0008 0000 4000 0000  
+  @cursor_sprite 1c1c 08c0 e0c0 0000 0008 0000 4000 0000
 
 
 @erase_cursor ( -- )
@@ -321,15 +426,15 @@ BRK
   !button_held                               ( held held held held prev_held )
   EOR AND                                    ( held held leading_edge )
   DUP ROT EOR                                ( held leading_edge falling_edge )
-  >button_released 
-  >button_pressed 
+  >button_released
+  >button_pressed
   >button_held
   RETURN
 
 
-@on_controller ( -- )  
+@on_controller ( -- )
   ;update_button_states CALL
-  !button_pressed #10 AND ,&up JCN 
+  !button_pressed #10 AND ,&up JCN
   !button_pressed #20 AND ,&down JCN
   !button_pressed #40 AND ,&left JCN
   !button_pressed #80 AND ,&right JCN
@@ -454,10 +559,10 @@ BRK
   #02 SFT [ LIT2 &width $2 ]                 ( pixel_colour* width* )
   #000d ;draw_capsule CALL                   ( // draw the full background )
   INC_X INC_Y
-  [ LIT &left_colour $1 ] ,&half_width LDR2  
+  [ LIT &left_colour $1 ] ,&half_width LDR2
   [ LIT2 &text_addr_1 $2 ] ;draw_button CALL
   ,&half_width LDR2 #0002 ADD2 [ LIT2 &spacer $2 ] ADD2 ADD_X
-  [ LIT &right_colour $1 ] ,&half_width LDR2 
+  [ LIT &right_colour $1 ] ,&half_width LDR2
   [ LIT2 &text_addr_2 $2 ] ;draw_button CALL
   [ LIT2 &start_x $2 ] [ LIT2 &start_y $2 ]
   >SCREEN.Y >SCREEN.X
@@ -465,13 +570,14 @@ BRK
   &half_width $2
 
 
-@draw_numeric_input ( colour width* number* -- )
+@draw_numeric_input ( colour width* number* active -- )
   !SCREEN.X ,&start_x STR2
-  STH2 STH2                                  ( colour | width* number* )
-  DUP ,&colour STR STH2r                     ( colour width* | number* )
-  DUP2 ,&width STR2 STH2r                    ( colour width* number* )
-  ;convert_short_to_decimal_string CALL      ( colour width* text_addr* )
-  ;draw_button CALL                          ( -- )
+  STH STH2 STH2                                  ( colour | active number* width* )
+  DUP ,&colour STR STH2r                     ( colour width* | active number* )
+  DUP2 ,&width STR2 STH2r                    ( colour width* number* | active )
+  ;convert_short_to_decimal_string CALL      ( colour width* text_addr* | active )
+  ;draw_button CALL                          ( -- | active )
+  STHr JMP RETURN                            ( // return if inactive )
   ;&arrow_sprite >SCREEN.ADDR
   #0002 ADD_Y #0002 ADD_X                    ( // position cursor for left-arrow )
   ,&colour LDR >SCREEN.SPRITE                ( // draw left arrow )
@@ -482,12 +588,6 @@ BRK
   RETURN
   &colour $1  &width $2
   &arrow_sprite 1030 70f0 7030 1000
-
-
-@draw_inactive_numeric_input ( colour width* number* -- )
-  ;convert_short_to_decimal_string CALL      ( colour width* text_addr* )
-  ;draw_button CALL                          ( -- )
-  RETURN
 
 ( ------------------------------------------------------------------------------- )
 (                         D R A W I N G   R O U T I N E S                         )
@@ -528,10 +628,10 @@ BRK
     NEG2                                     ( dx* -dy* )
     ,&start_cont JMP
   &dy_zero_or_greater
-    #0001 ,&yi STR2                          ( dx* dy* )  
+    #0001 ,&yi STR2                          ( dx* dy* )
   &start_cont
     OVR2 ,&dx STR2 DUP2 ,&dy STR2            ( // store dx and dy )
-    DOUBLE2 SWP2 SUB2                        ( D* )  
+    DOUBLE2 SWP2 SUB2                        ( D* )
     ,&loop JMP
       &x1 $2  &dx $2  &dy $2
 
