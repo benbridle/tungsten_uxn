@@ -141,150 +141,10 @@
 @program_start
   !SCREEN.WIDTH HALF2 >center_x
   !SCREEN.HEIGHT HALF2 >center_y
-  #f02b #e18a #a24d ;set_colours CALL
+  ;colour_scheme_1 ;load_colours CALL
   ;on_mouse >MOUSE.VECTOR
   ;on_screen >SCREEN.VECTOR
   ;launch_screen GOTO
-
-
-
-@inputs__draw_all                         ( -- )
-  ;inputs__data/total LDA                   ( total )
-  #00                                       ( total index )
-  &loop                                     ( total index )
-    EQUk ,&end JCN                          ( total index )
-    DUP ;inputs__draw_single CALL           ( total index )
-    INC ,&loop JMP                          ( total index )
-  &end                                      ( total index )
-    POP2 RETURN                             ( -- )
-@inputs__draw_single                      ( index -- )
-  DUP ;inputs__data/active LDA EQU SWP      ( is_active index )
-  ;inputs__callbacks/draw                   ( is_active index slot_addr* )
-  ,inputs__press JMP                        ( is_active index slot_addr* )
-@inputs__press_left                       ( index -- )
-  ;inputs__callbacks/left                   ( index slot_addr* )
-  ,inputs__press JMP                        ( index slot_addr* )
-@inputs__press_right                      ( index -- )
-  ;inputs__callbacks/right                  ( index slot_addr* )
-  ,inputs__press JMP                        ( index slot_addr* )
-@inputs__press_A                          ( index -- )
-  ;inputs__callbacks/A                      ( index slot_addr* )
-  ,inputs__press JMP                        ( index slot_addr* )
-@inputs__press                            ( index slot_addr* )
-  ROT DOUBLE #00 SWP                        ( slot_addr* offset* )
-  ADD2 LDA2 CALL RETURN                     ( -- )
-
-@inputs__register_draw_callbacks          ( [index callback*]+ total -- )
-  ;inputs__callbacks/draw                   ( [index callback*]+ total slot_addr* )
-  ,inputs__register_callbacks JMP           ( [index callback*]+ total slot_addr* )
-@inputs__register_left_callbacks          ( [index callback*]+ total -- )
-  ;inputs__callbacks/left                   ( [index callback*]+ total slot_addr* )
-  ,inputs__register_callbacks JMP           ( [index callback*]+ total slot_addr* )
-@inputs__register_right_callbacks         ( [index callback*]+ total -- )
-  ;inputs__callbacks/right                  ( [index callback*]+ total slot_addr* )
-  ,inputs__register_callbacks JMP           ( [index callback*]+ total slot_addr* )
-@inputs__register_A_callbacks             ( [index callback*]+ total -- )
-  ;inputs__callbacks/A                      ( [index callback*]+ total slot_addr* )
-  ,inputs__register_callbacks JMP           ( [index callback*]+ total slot_addr* )
-@inputs__register_callbacks               ( [index callback*]+ total slot_addr* -- )
-  ,&slot_addr STR2                          ( [index callback*]+ total )
-  &loop                                     ( [index callback*]+ total )
-    STH ROT                                 ( callback* index | total )
-    DOUBLE #00 SWP                          ( callback* offset* | total )
-    LIT2 &slot_addr $2                      ( callback* offset* slot_addr* | total )
-    ADD2 STA2                               ( | total )
-    STHr DEC DUP
-    ,&loop JCN
-  POP RETURN
-
-@inputs__set_active                       ( index -- )
-  ;inputs__data/active STA RETURN           ( -- )
-@inputs__setup                            ( active total -- )
-  ;inputs__data/total STA                   ( active )
-  DUP                                       ( active active )
-  ;inputs__data/active STA                  ( active )
-  ;inputs__data/prev_active STA             ( -- )
-  #00 ;inputs__draw_single CALL
-  ;inputs__draw_all CALL
-  ;inputs__on_controller >CONTROLLER.VECTOR
-  BRK
-
-@inputs__clear_callbacks                  ( -- )
-  LIT RETURN DUP                            ( op* )
-  ;inputs__callbacks_end                    ( op* end_addr* )
-  ;inputs__callbacks                        ( op* end_addr* start_addr* )
-  &loop                                     ( op* end_addr* addr* )
-    ROT2 SWP2                               ( end_addr* op* addr* )
-    STA2k ROT2 SWP2                         ( op* end_addr* addr* )
-    INC2 INC2 LTH2k ,&loop JCN              ( op* end_addr* addr* )
-  &end                                      ( op* end_addr* addr* )
-    POP2 POP2 POP2 RETURN                   ( -- )
-
-
-@inputs__on_controller
-  ;update_button_states CALL
-  !IS_UP_PRESSED ,&up JCN
-  !IS_DOWN_PRESSED ,&down JCN
-  !IS_LEFT_PRESSED ,&left JCN
-  !IS_RIGHT_PRESSED ,&right JCN
-  !IS_A_PRESSED ,&A JCN
-  BRK
-  &up
-    ;reset_scheme_counter CALL
-    ;inputs__data/active LDA                ( active )
-    DUP #00 EQU ,&break JCN                   ( // break if active==0 )
-    DEC ;inputs__data/active STA
-    ,&redraw_inputs JMP
-  &down
-    ;reset_scheme_counter CALL
-    ;inputs__data/active LDA                ( active )
-    DUP INC ;inputs__data/total LDA EQU     ( active is_max )
-    ,&break JCN                               ( // break if active==total-1 )
-    INC ;inputs__data/active STA
-    ,&redraw_inputs JMP
-  &break
-    POP BRK
-  &left
-    ;inputs__data/active LDA                ( active )
-    DUP ;inputs__press_left CALL            ( active )
-    ;inputs__draw_single CALL BRK           ( -- )
-  &right
-    ;inputs__data/active LDA                ( active )
-    DUP ;inputs__press_right CALL           ( active )
-    ;inputs__draw_single CALL BRK           ( -- )
-  &A
-    ;inputs__data/active LDA                ( active )
-    ;inputs__press_A CALL BRK               ( -- )
-  &redraw_inputs
-    ;inputs__data/prev_active LDA           ( prev_active )
-    ;inputs__data/active LDA                ( prev_active active )
-    NEQk #02 JCN POP2 BRK                   ( // end if active is unchanged )
-    DUP ;inputs__draw_single CALL           ( // draw active input )
-    SWP ;inputs__draw_single CALL           ( // draw prev_active input )
-    ;inputs__data/prev_active STA           ( // prev_active=active )
-    BRK
-
-@inputs__data
-  &prev_active $1
-  &active $1
-  &total $1
-@inputs__callbacks
-  &draw $16
-  &left $16
-  &right $16
-  &A $16
-&_pad $2
-@inputs__callbacks_end
-
-
-
-
-@choose ( flag false_value true_value -- value )
-  ROT #01 JCN SWP NIP RETURN
-
-
-
-
 
 
 @launch_screen ( -- )
@@ -303,23 +163,21 @@
   #00 #02 ;inputs__setup GOTO
   &title "TUNGSTEN NULL
 @launch_screen__draw__create_image        ( is_active )
-  !center_x #0032 SUB2 >SCREEN.X
-  !center_y #0008 ADD2 >SCREEN.Y
+  !center_x #0032 SUB2 >SCREEN.X            ( is_active )
+  !center_y #0008 ADD2 >SCREEN.Y            ( is_active )
   #08 #0c ;choose CALL                      ( colour )
   #0064 ;&label ;draw_button CALL RETURN    ( -- )
   &label "Create SPACE "image NULL
 @launch_screen__draw__load_image          ( is_active )
-  !center_x #0032 SUB2 >SCREEN.X
-  !center_y #0014 ADD2 >SCREEN.Y
+  !center_x #0032 SUB2 >SCREEN.X            ( is_active )
+  !center_y #0014 ADD2 >SCREEN.Y            ( is_active )
   #08 #0c ;choose CALL                      ( colour )
   #0064 ;&label ;draw_button CALL RETURN    ( -- )
   &label "Load SPACE "image NULL
-@launch_screen__A__create_image           ( -- )
+@launch_screen__A__create_image
   ;create_image_screen GOTO
-@launch_screen__A__load_image             ( -- )
+@launch_screen__A__load_image
   ;load_image_screen GOTO
-
-
 
 
 @create_image_screen ( -- )
@@ -422,11 +280,21 @@
 
 
 
-
-
-
-
 @draw_menu_background ( -- )
+  #01 ;fill_screen CALL
+  !center_x #0040 SUB2 >SCREEN.X
+  !center_y #0030 SUB2 >SCREEN.Y
+  DEC_X DEC_Y
+  #00 #0082 #0062 ;draw_rect CALL
+  !SCREEN.X #0002 SUB2 >SCREEN.X
+  !SCREEN.Y #0002 SUB2 >SCREEN.Y
+  #02 #0086 #0066 ;draw_rect CALL
+  RETURN
+
+
+
+
+@draw_menu_background_old ( -- )
   #00 ;fill_screen CALL
   !center_x #0040 SUB2 >SCREEN.X
   !center_y #0030 SUB2 >SCREEN.Y
@@ -471,7 +339,7 @@
 
 @draw_canvas ( -- )
   !canvas_x >SCREEN.X !canvas_y >SCREEN.Y
-  ;screen_buffer ;draw_1bit_buffer CALL
+  ;canvas_buffer ;draw_1bit_buffer CALL
   RETURN
 
 
@@ -526,7 +394,7 @@
 @toggle_pixel ( canvas_x* canvas_y* -- )
   ;canvas_coord_to_offset_and_mask CALL      ( offset* mask )
   DUP SWP2                                   ( mask* offset* )
-  ;screen_buffer ADD2                        ( mask* byte_address* )
+  ;canvas_buffer ADD2                        ( mask* byte_address* )
   DUP2 LDA                                   ( mask* byte_address* byte )
   DUP ROT2                                   ( byte_address* byte* mask* )
   ROT POP2                                   ( byte_address* byte mask )
@@ -541,7 +409,7 @@
   >SCREEN.Y >SCREEN.X #01 >SCREEN.PIXEL      ( canvas_x* canvas_y* )
   ;canvas_coord_to_offset_and_mask CALL      ( offset* mask )
   DUP SWP2                                   ( mask* offset* )
-  ;screen_buffer ADD2                        ( mask* byte_address* )
+  ;canvas_buffer ADD2                        ( mask* byte_address* )
   DUP2 LDA                                   ( mask* byte_address* byte )
   DUP ROT2                                   ( byte_address* byte* mask* )
   ROT POP2                                   ( byte_address* byte mask )
@@ -636,7 +504,8 @@
   POP2 INC2 RETURN                           ( text_addr* )
   &text_addr $5 00
 
-
+@choose ( flag false_value true_value -- value )
+  ROT #01 JCN SWP NIP RETURN
 
 ( ------------------------------------------------------------------------------- )
 (                  U S E R   I N T E R F A C E   E L E M E N T S                  )
@@ -718,6 +587,139 @@
   &colour $1  &width $2
   &arrow_sprite 1030 70f0 7030 1000
 
+
+( ------------------------------------------------------------------------------- )
+(                         I N P U T S   F R A M E W O R K                         )
+
+@inputs__draw_all                         ( -- )
+  ;inputs__data/total LDA                   ( total )
+  #00                                       ( total index )
+  &loop                                     ( total index )
+    EQUk ,&end JCN                          ( total index )
+    DUP ;inputs__draw_single CALL           ( total index )
+    INC ,&loop JMP                          ( total index )
+  &end                                      ( total index )
+    POP2 RETURN                             ( -- )
+
+@inputs__draw_single                      ( index -- )
+  DUP ;inputs__data/active LDA EQU SWP      ( is_active index )
+  ;inputs__callbacks/draw                   ( is_active index slot_addr* )
+  ,inputs__press JMP                        ( is_active index slot_addr* )
+@inputs__press_left                       ( index -- )
+  ;inputs__callbacks/left                   ( index slot_addr* )
+  ,inputs__press JMP                        ( index slot_addr* )
+@inputs__press_right                      ( index -- )
+  ;inputs__callbacks/right                  ( index slot_addr* )
+  ,inputs__press JMP                        ( index slot_addr* )
+@inputs__press_A                          ( index -- )
+  ;inputs__callbacks/A                      ( index slot_addr* )
+  ,inputs__press JMP                        ( index slot_addr* )
+@inputs__press                            ( index slot_addr* )
+  ROT DOUBLE #00 SWP                        ( slot_addr* offset* )
+  ADD2 LDA2 CALL RETURN                     ( -- )
+
+@inputs__register_draw_callbacks          ( [index callback*]+ total -- )
+  ;inputs__callbacks/draw                   ( [index callback*]+ total slot_addr* )
+  ,inputs__register_callbacks JMP           ( [index callback*]+ total slot_addr* )
+@inputs__register_left_callbacks          ( [index callback*]+ total -- )
+  ;inputs__callbacks/left                   ( [index callback*]+ total slot_addr* )
+  ,inputs__register_callbacks JMP           ( [index callback*]+ total slot_addr* )
+@inputs__register_right_callbacks         ( [index callback*]+ total -- )
+  ;inputs__callbacks/right                  ( [index callback*]+ total slot_addr* )
+  ,inputs__register_callbacks JMP           ( [index callback*]+ total slot_addr* )
+@inputs__register_A_callbacks             ( [index callback*]+ total -- )
+  ;inputs__callbacks/A                      ( [index callback*]+ total slot_addr* )
+  ,inputs__register_callbacks JMP           ( [index callback*]+ total slot_addr* )
+@inputs__register_callbacks               ( [index callback*]+ total slot_addr* -- )
+  ,&slot_addr STR2                          ( [index callback*]+ total )
+  &loop                                     ( [index callback*]+ total )
+    STH ROT                                 ( callback* index | total )
+    DOUBLE #00 SWP                          ( callback* offset* | total )
+    LIT2 &slot_addr $2                      ( callback* offset* slot_addr* | total )
+    ADD2 STA2                               ( | total )
+    STHr DEC DUP
+    ,&loop JCN
+  POP RETURN
+
+@inputs__setup                            ( active total -- )
+  ;inputs__data/total STA                   ( active )
+  DUP                                       ( active active )
+  ;inputs__data/active STA                  ( active )
+  ;inputs__data/prev_active STA             ( -- )
+  #00 ;inputs__draw_single CALL
+  ;inputs__draw_all CALL
+  ;inputs__on_controller >CONTROLLER.VECTOR
+  BRK
+
+@inputs__clear_callbacks                  ( -- )
+  LIT RETURN DUP                            ( op* )
+  ;inputs__callbacks_end                    ( op* end_addr* )
+  ;inputs__callbacks                        ( op* end_addr* start_addr* )
+  &loop                                     ( op* end_addr* addr* )
+    ROT2 SWP2                               ( end_addr* op* addr* )
+    STA2k ROT2 SWP2                         ( op* end_addr* addr* )
+    INC2 INC2 LTH2k ,&loop JCN              ( op* end_addr* addr* )
+  POP2 POP2 POP2 RETURN                     ( -- )
+
+
+@inputs__on_controller
+  ;update_button_states CALL
+  !IS_UP_PRESSED ,&up JCN
+  !IS_DOWN_PRESSED ,&down JCN
+  !IS_LEFT_PRESSED ,&left JCN
+  !IS_RIGHT_PRESSED ,&right JCN
+  !IS_A_PRESSED ,&A JCN
+  BRK
+  &up
+    ;reset_scheme_counter CALL
+    ;inputs__data/active LDA                ( active )
+    DUP #00 EQU ,&break JCN                   ( // break if active==0 )
+    DEC ;inputs__data/active STA
+    ,&redraw_inputs JMP
+  &down
+    ;reset_scheme_counter CALL
+    ;inputs__data/active LDA                ( active )
+    DUP INC ;inputs__data/total LDA EQU     ( active is_max )
+    ,&break JCN                               ( // break if active==total-1 )
+    INC ;inputs__data/active STA
+    ,&redraw_inputs JMP
+  &break
+    POP BRK
+  &left
+    ;inputs__data/active LDA                ( active )
+    DUP ;inputs__press_left CALL            ( active )
+    ;inputs__draw_single CALL BRK           ( -- )
+  &right
+    ;inputs__data/active LDA                ( active )
+    DUP ;inputs__press_right CALL           ( active )
+    ;inputs__draw_single CALL BRK           ( -- )
+  &A
+    ;inputs__data/active LDA                ( active )
+    ;inputs__press_A CALL BRK               ( -- )
+  &redraw_inputs
+    ;inputs__data/prev_active LDA           ( prev_active )
+    ;inputs__data/active LDA                ( prev_active active )
+    NEQk #02 JCN POP2 BRK                   ( // end if active is unchanged )
+    DUP ;inputs__draw_single CALL           ( // draw active input )
+    SWP ;inputs__draw_single CALL           ( // draw prev_active input )
+    ;inputs__data/prev_active STA           ( // prev_active=active )
+    BRK
+
+@inputs__data
+  &prev_active $1
+  &active $1
+  &total $1
+@inputs__callbacks
+  &draw $16
+  &left $16
+  &right $16
+  &A $16
+&_pad $2
+@inputs__callbacks_end
+
+
+
+
 ( ------------------------------------------------------------------------------- )
 (                         D R A W I N G   R O U T I N E S                         )
 
@@ -736,10 +738,23 @@
 
 
 @fill_screen ( colour -- )
-  #0000 >SCREEN.X #0000 >SCREEN.Y            ( colour )
-  SCREEN.WIDTH DEI2 SCREEN.HEIGHT DEI2       ( colour width* height* )
-  ;draw_filled_rect CALL                     ( -- )
-  RETURN
+  #20 SFT                                   ( // pixel colour to sprite colour )
+  #0000 DUP2 >SCREEN.X >SCREEN.Y            ( colour )
+  ;&blank_sprite >SCREEN.ADDR               ( colour )
+  &loop                                     ( colour )
+    DUP >SCREEN.SPRITE                      ( colour )
+    !SCREEN.X #0008 ADD2                    ( colour x* )
+    DUP2 >SCREEN.X                          ( colour x* )
+    !SCREEN.WIDTH LTH2                      ( colour is_line_incomplete )
+    ,&loop JCN                              ( colour )
+  &next_line                                ( colour )
+    #0000 >SCREEN.X                         ( colour )
+    !SCREEN.Y #0008 ADD2                    ( colour y* )
+    DUP2 >SCREEN.Y                          ( colour y* )
+    !SCREEN.HEIGHT LTH2                     ( colour is_screen_incomplete )
+    ,&loop JCN
+  POP RETURN
+  &blank_sprite 0000 0000 0000 0000
 
 
 @draw_line ( colour x0* y0* x1* y1* -- )
@@ -930,11 +945,18 @@
 ( ------------------------------------------------------------------------------- )
 (                                     D A T A                                     )
 
-@colour_scheme_1
+@colour_scheme_1_old
   f025 e189 a246
   f023 e188 a245
   f022 e188 a244
   f023 e188 a245
+
+@colour_scheme_1
+  f028 e18b a248
+  f024 e189 a246
+  f022 e188 a244
+  f024 e189 a246
+
 
 
 @acorn_font
@@ -1050,7 +1072,7 @@ c060 6030 6060 c000  ( } )
 2514 2189 4125 1426  (   )
 
 
-@screen_buffer
+@canvas_buffer
 (
   This label needs to be at the end of the
   program, to ensure that there is enough
