@@ -1,0 +1,471 @@
+~_instruction_renaming.tal
+~_device_macros.tal
+~_constants.tal
+~_common_macros.tal
+
+( ---------------------------------------------------------------------------- )
+(                       G L O B A L   V A R I A B L E S                        )
+
+( Canvas origin in screen-space coords )
+%/V.CANVAS.X        { #00 }     %/V.CANVAS.X?        { #00 LDZ* }     %/V.CANVAS.X!        { #00 STZ* }
+%/V.CANVAS.Y        { #02 }     %/V.CANVAS.Y?        { #02 LDZ* }     %/V.CANVAS.Y!        { #02 STZ* }
+( Canvas size )
+%/V.CANVAS.WIDTH    { #04 }     %/V.CANVAS.WIDTH?    { #04 LDZ* }     %/V.CANVAS.WIDTH!    { #04 STZ* }
+%/V.CANVAS.HEIGHT   { #06 }     %/V.CANVAS.HEIGHT?   { #06 LDZ* }     %/V.CANVAS.HEIGHT!   { #06 STZ* }
+( Canvas colour palette )
+( Default screen background is colour 0x02 )
+|0008 @canvas_colour_palette
+%/V.CANVAS.RED      { #08 }     %/V.CANVAS.RED?      { #08 LDZ* }     %/V.CANVAS.RED!      { #08 STZ* }
+%/V.CANVAS.GREEN    { #0a }     %/V.CANVAS.GREEN?    { #0a LDZ* }     %/V.CANVAS.GREEN!    { #0a STZ* }
+%/V.CANVAS.BLUE     { #0c }     %/V.CANVAS.BLUE?     { #0c LDZ* }     %/V.CANVAS.BLUE!     { #0c STZ* }
+( UI colour palette )
+|000e @ui_colour_palette
+%/V.UI.RED          { #0e }     %/V.UI.RED?          { #0e LDZ* }      %/V.UI.RED!          { #0e STZ* }
+%/V.UI.GREEN        { #10 }     %/V.UI.GREEN?        { #10 LDZ* }      %/V.UI.GREEN!        { #10 STZ* }
+%/V.UI.BLUE         { #12 }     %/V.UI.BLUE?         { #12 LDZ* }      %/V.UI.BLUE!         { #12 STZ* }
+
+( The currently active and previously active drawing tools. )
+%/V.ACTIVE_TOOL     { #14 }     %/V.ACTIVE_TOOL?     { #14 LDZ }      %/V.ACTIVE_TOOL!     { #14 STZ }
+%/V.PREV_TOOL       { #15 }     %/V.PREV_TOOL?       { #15 LDZ }      %/V.PREV_TOOL!       { #15 STZ }
+
+%TOOL_COUNT? { #07 }
+
+( ---------------------------------------------------------------------------- )
+(                          P R O G R A M   S T A R T                           )
+
+|0100
+;ui__initialise CALL
+#0080 /V.CANVAS.WIDTH! #0060 /V.CANVAS.HEIGHT! #01 /V.ACTIVE_TOOL!
+( Seed default palettes for canvas and UI )
+#1c8d /V.CANVAS.RED!  #1619 /V.CANVAS.GREEN! #1010 /V.CANVAS.BLUE!
+#14ad /V.UI.RED!      #269d /V.UI.GREEN!     #3789 /V.UI.BLUE!
+;recenter_canvas CALL
+;canvas_screen GOTO
+
+~_user_interface_framework.tal
+
+( ---------------------------------------------------------------------------- )
+(                        P R O G R A M   S C R E E N S                         )
+
+@canvas_screen
+  ;ui__clear CALL
+  ;canvas_colour_palette ;ui__load_colour_palette CALL
+  ;draw_canvas CALL
+  ;canvas_screen__A        /I.CALLBACK.A!
+  ;canvas_screen__B        /I.CALLBACK.B!
+  ;canvas_screen__use_tool /I.CALLBACK.MOUSE1!
+  ;canvas_screen__temp_pan /I.CALLBACK.MOUSE2!
+  ;canvas_screen__chtool   /I.CALLBACK.MOUSE3!
+  ;ui__run_blank GOTO
+@canvas_screen__A
+  ( TODO: Think about having A trigger for press and release. Maybe a separate callback? A_UP and A_DOWN? )
+  /MOUSE.STATE? BITMASK_1 ORA /MOUSE.STATE!
+  /MOUSE.VECTOR? CALL
+  RETURN
+
+( Temporarily switch to the pan tool when dragging with the middle mouse button )
+@canvas_screen__temp_pan ( state -- )
+  ( If just pressed, stash the active tool and change to pan )
+  DUP #ff NEQ ,&call JCN
+    /V.ACTIVE_TOOL? /V.PREV_TOOL!
+    #00 /V.ACTIVE_TOOL!
+  ( Use the current tool )
+  &call DUP ,canvas_screen__use_tool JSR
+  ( If released, restore the active tool )
+  #01 NEQ ,&return JCN
+    /V.PREV_TOOL? /V.ACTIVE_TOOL!
+  &return RETURN
+
+@canvas_screen__chtool  #01 IF_NOT_EQUAL RETURN
+@canvas_screen__B       NORETURN ;tool_screen GOTO
+
+@canvas_screen__use_tool
+  ( Dispatch control to the routine of the active tool )
+  /V.ACTIVE_TOOL? MUL4 JMP
+  ;&pan GOTO  ;&brush1 GOTO  ;&brush2 GOTO  ;&brush3 GOTO  ;&line GOTO
+
+  &pan #01 EQU ,&pan_release JCN
+    ( Erase old indicator rectangle )
+    /V.CANVAS.X? /SCREEN.X! /V.CANVAS.Y? /SCREEN.Y!
+    COL_0_FG /V.CANVAS.WIDTH? /V.CANVAS.HEIGHT? ;draw_rect_outline CALL
+    ( Move canvas origin coordinates )
+    /MOUSE.X? /I.CURSOR.X? SUB* /V.CANVAS.X? ADD* /V.CANVAS.X!
+    /MOUSE.Y? /I.CURSOR.Y? SUB* /V.CANVAS.Y? ADD* /V.CANVAS.Y!
+    ( Clamp canvas position so that canvas is always on-screen )
+    /V.CANVAS.X? /V.CANVAS.WIDTH?  /SCREEN.WIDTH?  ,&_pan_clamp JSR /V.CANVAS.X!
+    /V.CANVAS.Y? /V.CANVAS.HEIGHT? /SCREEN.HEIGHT? ,&_pan_clamp JSR /V.CANVAS.Y!
+    ( Draw new indicator rectangle )
+    /V.CANVAS.X? /SCREEN.X! /V.CANVAS.Y? /SCREEN.Y!
+    COL_3_FG /V.CANVAS.WIDTH? /V.CANVAS.HEIGHT? ;draw_rect_outline CALLRETURN
+  &pan_release
+    ;clear_foreground CALL
+    ;draw_canvas CALLRETURN
+  &_pan_clamp                             ( start* len* screen* -- start* )
+    ( Set up the stack. `left` is margin-size, `right` is screen-margin. )
+    #0010 ROTk* SUB* STH* POP* SUB* STH*    ( start* len* | left* right* )
+    POP* STHr* OVR* STHr*                   ( start* right* start* left* )
+    ( Check if start is out of left or right bounds, returning the bound if true )
+    SWPk* ;lth_signed* CALL ,&p_skip_l JCN   ( start* right* start* left* )
+      NIP* NIP* NIP* RETURN                 ( // left* )
+      &p_skip_l POP* POP*                   ( start* right* )
+    SWPk* ;gth_signed* CALL ,&p_skip_r JCN  ( start* right* )
+      NIP* RETURN                           ( // right* )
+      &p_skip_r POP*                        ( start* )
+    RETURN
+
+  &line ,&line_released JCN
+    /I.MOUSE1.X? /I.MOUSE1.Y? /I.CURSOR.X? /I.CURSOR.Y?
+    COL_0_FG ;get_callback_to_draw_pixel CALL ;draw_line CALL
+    /I.MOUSE1.X? /I.MOUSE1.Y? /MOUSE.X? /MOUSE.Y?
+    COL_3_FG ;get_callback_to_draw_pixel CALL ;draw_line CALLRETURN
+  &line_released
+    /I.MOUSE1.X? /I.MOUSE1.Y? /I.CURSOR.X? /I.CURSOR.Y?
+    COL_3 ;get_callback_to_commit_pixel CALL ;draw_line CALL
+    ;draw_canvas CALLRETURN
+
+  &brush1 COL_1 ,&brush_colour STR ,&_brush JMP
+  &brush2 COL_2 ,&brush_colour STR ,&_brush JMP
+  &brush3 COL_3 ,&brush_colour STR ,&_brush JMP
+
+  &_brush ,&_brush_released JCN
+    /I.MOUSE1.X? /I.MOUSE1.Y? /MOUSE.X? /MOUSE.Y?
+    [ LIT &brush_colour $1 ] ;get_callback_to_commit_pixel CALL ;draw_line CALL
+    ;ui__start_mouse1_drag CALLRETURN
+  &_brush_released
+    ;draw_canvas CALLRETURN
+
+
+
+
+
+@tool_screen
+  ;ui__clear CALL
+  ;ui_colour_palette ;ui__load_colour_palette CALL
+
+  ( Draw non-interactive elements )
+  COL_0 ;fill_screen_with_colour CALL
+  (   Labels )
+  #0039 CENTER_LEFT? /SCREEN.X! #0008 CENTER_DOWN? /SCREEN.Y!
+  COL_1 ;&colour_text ;draw_text CALL
+  #0034 CENTER_LEFT? /SCREEN.X! #0016 CENTER_DOWN? /SCREEN.Y!
+  COL_1 ;&shape_text ;draw_text CALL
+  #0040 CENTER_LEFT? /SCREEN.X! #0024 CENTER_DOWN? /SCREEN.Y!
+  COL_1 ;&pattern_text ;draw_text CALL
+
+  (   Draw colour capsules )
+  #0008 CENTER_LEFT? /SCREEN.X! #0008 CENTER_DOWN? /SCREEN.Y!
+  ;sprite/capsule_half /SCREEN.ADDR!
+  #01 /SCREEN.AUTO!
+  COL_T2 /SCREEN.SPRITE! COL_T2_X /SCREEN.SPRITE!
+  #0003 MOVE_RIGHT
+  COL_T2 /SCREEN.SPRITE! COL_T2_X /SCREEN.SPRITE!
+  #0003 MOVE_RIGHT
+  COL_T2 /SCREEN.SPRITE! COL_T2_X /SCREEN.SPRITE!
+  #0003 MOVE_RIGHT
+  COL_T2 /SCREEN.SPRITE! COL_T2_X /SCREEN.SPRITE!
+  #00 /SCREEN.AUTO!
+
+  (   Draw brush shapes )
+  #0008 CENTER_LEFT? /SCREEN.X! #0016 CENTER_DOWN? /SCREEN.Y!
+  ;brush_shape /SCREEN.ADDR!
+  #05 /SCREEN.AUTO!
+  COL_T2 /SCREEN.SPRITE!
+  #0003 MOVE_RIGHT
+  COL_T2 /SCREEN.SPRITE!
+  #0003 MOVE_RIGHT
+  COL_T2 /SCREEN.SPRITE!
+  #0003 MOVE_RIGHT
+  COL_T2 /SCREEN.SPRITE!
+  #0003 MOVE_RIGHT
+  COL_T2 /SCREEN.SPRITE!
+  #0003 MOVE_RIGHT
+  COL_T2 /SCREEN.SPRITE!
+  #0003 MOVE_RIGHT
+  COL_T2 /SCREEN.SPRITE!
+  #0003 MOVE_RIGHT
+  COL_T2 /SCREEN.SPRITE!
+  #0003 MOVE_RIGHT
+  #00 /SCREEN.AUTO!
+
+
+  (   Draw brush shapes )
+  #0008 CENTER_LEFT? /SCREEN.X! #0024 CENTER_DOWN? /SCREEN.Y!
+  ;brush_pattern /SCREEN.ADDR!
+  #05 /SCREEN.AUTO!
+  COL_T2 /SCREEN.SPRITE!
+  #0003 MOVE_RIGHT
+  COL_T2 /SCREEN.SPRITE!
+  #0003 MOVE_RIGHT
+  COL_T2 /SCREEN.SPRITE!
+  #0003 MOVE_RIGHT
+  COL_T2 /SCREEN.SPRITE!
+  #0003 MOVE_RIGHT
+  COL_T2 /SCREEN.SPRITE!
+  #0003 MOVE_RIGHT
+  COL_T2 /SCREEN.SPRITE!
+  #0003 MOVE_RIGHT
+  COL_T2 /SCREEN.SPRITE!
+  #0003 MOVE_RIGHT
+  COL_T2 /SCREEN.SPRITE!
+  #0003 MOVE_RIGHT
+  #00 /SCREEN.AUTO!
+
+
+
+  ( Register inc/dec callbacks )
+  #00 ;tool_screen__change__palette
+  #01 ;ui__register_change_callbacks CALL
+  ( Register draw callbacks )
+  #00 ;tool_screen__draw__palette
+  #01 ;tool_screen__draw__colour
+  #02 ;ui__register_draw_callbacks CALL
+  ( Register raw input callbacks )
+  ;tool_screen__B      /I.CALLBACK.B!
+  ;tool_screen__canvas /I.CALLBACK.MOUSE3!
+  ( Finish callback registration )
+  #0002 ;ui__run GOTO
+  &colour_text "Colour: <NULL>
+  &shape_text "Shape: <NULL>
+  &pattern_text "Pattern: <NULL>
+
+@tool_screen__canvas #01 IF_NOT_EQUAL RETURN
+@tool_screen__B      NORETURN ;canvas_screen GOTO
+@tool_screen__change__palette   ( delta -- )
+  /V.ACTIVE_TOOL? ADD TOOL_COUNT? ;clamp CALL /V.ACTIVE_TOOL! RETURN
+
+
+@tool_screen__draw__colour                ( active? )
+  ( TODO: This would draw the colour selectors on screen )
+  POP RETURN
+  COL_12 COL_32 CHOOSE
+  #0040 CENTER_LEFT? /SCREEN.X! #002c CENTER_DOWN? /SCREEN.Y!
+  #0020 DUP* ;draw_text CALLRETURN
+
+
+@tool_screen__draw__palette               ( active? )
+  ( TODO: Have the icon that the mouse is currently hovering over be
+    rendered in the chosen-but-not-active colour. Figure out how to do this
+    for all UI elements. Colours, for example. )
+
+  ( Choose between the real active tool and an impossible tool number )
+  #ff /V.ACTIVE_TOOL? CHOOSE ,&active_tool STR
+  ( Draw a label on top, containing the name of the active tool )
+  #0040 CENTER_LEFT? /SCREEN.X! #002c CENTER_UP? /SCREEN.Y!
+  COL_20 #0080 /V.ACTIVE_TOOL? ;get_tool_name CALL ;draw_button CALL
+  ( Draw a large capsule to use as a background for the tool icons )
+  #001c CENTER_UP! COL_2                    ( colour -- )
+  ;get_tool_palette_width CALL               ( colour width* )
+  /SCREEN.WIDTH? OVR* SUB* HALVE*           ( colour width* bg_x* )
+  /SCREEN.X! #001b ;draw_capsule CALL   ( -- )
+  ( Draw each of the large tool icons )
+  TOOL_COUNT? #00        ( total i )
+  &loop DUPk [ LIT &active_tool $1 ] EQU
+        ;draw_tool_palette_icon CALL
+        INC GTHk ,&loop JCN
+  &end POP* RETURN
+
+
+@get_tool_name                            ( index -- text_addr* )
+  MUL4 JMP
+  ;&pan    RETURN
+  ;&brush1 RETURN
+  ;&brush2 RETURN
+  ;&brush3 RETURN
+  ;&line   RETURN
+  ;&rect   RETURN
+  ;&fill   RETURN
+  &pan    "Pan <SPACE> "canvas <NULL>
+  &brush1 "Brush <SPACE> "1 <NULL>
+  &brush2 "Brush <SPACE> "2 <NULL>
+  &brush3 "Brush <SPACE> "3 <NULL>
+  &line   "Line <SPACE> "tool <NULL>
+  &rect   "Rectangle <SPACE> "tool <NULL>
+  &fill   "Bucket <SPACE> "fill <NULL>
+
+
+
+( Calculates the width of the tool palette from the number of icons )
+@get_tool_palette_width                   ( -- width* )
+  #00 TOOL_COUNT? #001a MUL* INC* RETURN              ( width* )
+( Draw a single tool icon )
+@draw_tool_palette_icon                   ( index active? )
+  LITr 00 STHk* POP LITr 00 STH             ( | index* active index* )
+  #001a CENTER_UP! /SCREEN.WIDTH?           ( s_width* | index* active index* )
+  ,get_tool_palette_width JSR               ( s_width* width* | index* active index* )
+  SUB* HALVE* ADD2*                         ( zone_0_x* | index* active index* )
+  STHr* #001a MUL* ADD* /SCREEN.X!          ( | index* active )
+  STHr STHkr /V.ACTIVE_TOOL? EQU            ( active? current_tool? | index* )
+  COL_0 COL_1 CHOOSE COL_3 CHOOSE           ( colour | index* )
+  #0017 DUP* ;draw_capsule_smooth CALL      ( | index* )
+  COL_T2 ;tool_icon STHr* #0048 MUL* ADD*   ( colour 3x3_sprite_addr* )
+  ( Draw the 1-bit 3x3 sprite )             ( colour sprite_addr* )
+  /SCREEN.ADDR! #26 /SCREEN.AUTO!
+  /SCREEN.SPRITE DEOk DEOk DEO
+  #00 /SCREEN.AUTO! #0018 MOVE_UP
+  RETURN
+
+
+
+
+( Erase a foreground pixel, draw a background pixel, and set a canvas pixel )
+@get_callback_to_commit_pixel             ( colour -- callback* )
+  DUP ,&colour STR ,get_callback_to_set_pixel/colour STR ;&callback RETURN
+  &callback                               ( x* y* -- )
+    SWPk* /SCREEN.X! /SCREEN.Y!
+    COL_0_FG /SCREEN.PIXEL! [ LIT &colour $1 ] /SCREEN.PIXEL!
+    SWP* /V.CANVAS.X? SUB* SWP* /V.CANVAS.Y? SUB*
+    ,get_callback_to_set_pixel/callback JMP
+@get_callback_to_draw_pixel               ( colour -- callback* )
+  ,&colour STR ;&callback RETURN
+  &callback                               ( x* y* -- )
+    /SCREEN.Y! /SCREEN.X! [ LIT &colour $1 ] /SCREEN.PIXEL! RETURN
+@get_callback_to_set_pixel                ( colour -- callback* )
+  ,&colour STR ;&callback RETURN
+  &callback                               ( x* y* -- )
+    [ LIT* 00 &colour $1 ] ROT* ROT* ;set_canvas_pixel CALL POP RETURN
+
+
+
+@is_point_on_canvas?                      ( x* y*  -- in_bounds? )
+  /V.CANVAS.HEIGHT? LTH* STH /V.CANVAS.WIDTH? LTH* STHr AND RETURN
+@set_canvas_pixel                         ( colour x* y* -- )
+  OVR* OVR* ;is_point_on_canvas? CALL ,&cont JCN
+  POP* POP* POP RETURN &cont
+  ,get_mask_and_address JSR                 ( colour mask row_addr* )
+  STH* STHk* SWPr* LDAkr STHr               ( colour mask row | colour mask row_addr* )
+  ( Test bit 1 of colour )
+  ROT #01 AND ,apply_mask JSR               ( row_modified | colour mask row_addr* )
+  STHkr* STA SWPr* STHr*                    ( colour mask | row_addr* )
+  ( Change row_addr to second row )
+  LITr* 0008 ADDr* LDAkr STHr               ( colour mask row | row_addr* )
+  ( Test bit 2 of colour )
+  ROT #02 AND ,apply_mask JSR               ( row_modified | row_addr* )
+  STHr* STA RETURN                          ( -- )
+
+( Set each one-masked bit in `row` to `value?` )
+@apply_mask           ( mask row value? -- row )
+  ,&set_bits_to_on JCN #ff ROT SUB AND DUP &set_bits_to_on ORA RETURN
+
+( Return the memory address and bitmask for this canvas pixel )
+@get_mask_and_address                     ( x* y* -- mask row_address* )
+  OVR* OVR* ,get_sprite_address JSR         ( x* y* sprite_addr* )
+  SWP* MOD8* ADD*                           ( x* row_addr* )
+  STH* ,get_mask JSR STHr* RETURN           ( mask row_address* )
+( Return the memory address for the 2-bit sprite containing this canvas pixel )
+@get_sprite_address                       ( x* y* -- sprite_address* )
+  SWP* DIV8* SWP* DIV8*                     ( spritex* spritey* )
+  /V.CANVAS.WIDTH? CEIL8DIV8*               ( sprite_x* sprite_y* sprite_width* )
+  MUL* ADD* MUL16*                          ( sprite_offset* )
+  ;canvas_buffer ADD* RETURN                ( sprite_addr* )
+( Get a bitmask for the `x%8`th little-endian bit )
+@get_mask  ( x* -- mask )
+  NIP MOD8 #0107 ROT SUB SHL4 SFT RETURN
+
+
+
+@gth_signed* SWP*
+@lth_signed* #8000 STHk* ADD* SWP* STHr* ADD* GTH* RETURN
+
+( Returns 0 <= index < total )
+@clamp                                    ( index total -- index )
+  LITr 80                                   ( index total | 80 )
+  ( Subtract 1 from total, add #80 to index and total )
+  STHkr INC SUB SWP STHkr SUB               ( max index | 80 )
+  ( Keep max if max < index, else keep index )
+  LTHk JMP SWP POP STHkr                    ( index 80 | 80 )
+  ( Keep 80 if index < 80, else keep index )
+  LTHk JMP SWP NIP STHr SUB RETURN          ( index )
+
+
+
+( Recalculate the canvas position in order to center the canvas on the screen )
+@recenter_canvas                          ( -- )
+  /I.CENTER.X? /V.CANVAS.WIDTH?  HALVE* SUB* /V.CANVAS.X!
+  /I.CENTER.Y? /V.CANVAS.HEIGHT? HALVE* SUB* /V.CANVAS.Y!
+  RETURN
+
+( Render the canvas to the screen )
+@draw_canvas                              ( -- )
+  COL_20 ;fill_screen_with_colour CALL      ( -- )
+  #05 /SCREEN.AUTO!                         ( -- )
+  /V.CANVAS.Y? /SCREEN.Y!                   ( -- )
+  ;canvas_buffer /SCREEN.ADDR!              ( -- )
+  /V.CANVAS.HEIGHT? CEIL8DIV8*              ( sprite_height* )
+  &new_line                               ( sprite_height* )
+    /V.CANVAS.X? /SCREEN.X!                 ( sprite_height* )
+    /V.CANVAS.WIDTH? CEIL8DIV8*             ( sprite_height* sprite_width* )
+  &loop                                   ( sprite_height* sprite_width* )
+    COL_0123 /SCREEN.SPRITE!                ( sprite_height* sprite_width* )
+    DEC* DUP* GTH0* ,&loop JCN              ( sprite_height* sprite_width* )
+  ( Move down to the next sprite row )
+    POP* DEC* #0008 MOVE_DOWN               ( sprite_height* )
+    DUP* ADD ,&new_line JCN                 ( sprite_height* )
+  &end                                    ( 0* )
+    /SCREEN.AUTO! POP RETURN                ( -- )
+
+
+
+~_fill_screen.tal
+~_draw_line.tal
+~_draw_rect.tal
+~_draw_shapes.tal
+~_draw_text.tal
+~_integer_to_string.tal
+~_draw_ui_elements.tal
+~_acorn_font.tal
+
+
+@tool_icon
+  &pan      0000 0000 0000 0000    0000 0010 387c d610    0000 0000 0000 0000
+            0206 0c1f 0c06 0200    1010 10ff 1010 1010    80c0 60f0 60c0 8000
+            0000 0000 0000 0000    d67c 3810 0000 0000    0000 0000 0000 0000
+  &brush    0000 0000 0000 0000    0000 0814 1c1c 1c7f    0000 0000 0000 0000
+            0000 0000 0100 0000    7f00 7dff fe00 0008    0000 0000 0000 0000
+            0000 0000 0000 0000    1808 081c 0000 0000    0000 0000 0000 0000
+  &brush_2  0000 0000 0000 0000    0000 0814 1c1c 1c7f    0000 0000 0000 0000
+            0000 0000 0100 0000    7f00 7dff fe00 0018    0000 0000 0000 0000
+            0000 0000 0000 0000    2408 103c 0000 0000    0000 0000 0000 0000
+  &brush_3  0000 0000 0000 0000    0000 0814 1c1c 1c7f    0000 0000 0000 0000
+            0000 0000 0100 0000    7f00 7dff fe00 0018    0000 0000 0000 0000
+            0000 0000 0000 0000    2408 2418 0000 0000    0000 0000 0000 0000
+  &line     0000 0000 0000 0000    0000 0000 0001 0001    0000 0040 40f0 4040
+            0000 0000 0000 0005    0204 0810 2040 8000    0000 0000 0000 0000
+            041f 0404 0000 0000    0000 0000 0000 0000    0000 0000 0000 0000
+  &rect     0000 0008 083e 080b    0000 0000 0000 00ff    0000 0020 20f8 20a0
+            0302 0302 0302 030b    55aa 55aa 55aa 55ff    8080 8080 8080 80a0
+            083e 0808 0000 0000    0000 0000 0000 0000    20f8 2020 0000 0000
+  &fill     0000 0000 0000 0001    0000 0000 385f af53    0000 0000 0000 c0e0
+            0205 0a14 1008 0402    8100 0401 1224 4890    f0f0 b030 3030 2020
+            0100 0000 0000 0000    20c0 0000 0000 0000    2000 0000 0000 0000
+
+@brush_shape
+  &1 0000 0010 0000 0000 ( 1x1 block   )
+  &2 0000 1038 1000 0000 ( 3x3 cross   )
+  &3 0000 3838 3800 0000 ( 3x3 block   )
+  &4 0010 387c 3810 0000 ( 5x5 diamond )
+  &5 0038 7c7c 7c38 0000 ( 5x5 rounded )
+  &6 1038 7cfe 7c38 1000 ( 7x7 diamond )
+  &7 387c fefe fe7c 3800 ( 7x7 circle  )
+  &8 7cfe fefe fefe 7c00 ( 7x7 rounded )
+
+@brush_pattern
+  &1 ffff ffff ffff ffff ( 1/1 fill       )
+  &2 aa55 aa55 aa55 aa55 ( 1/2 fill       )
+  &3 1122 4488 1122 4488 ( 1/4 left-diag  )
+  &4 8844 2211 8844 2211 ( 1/4 right-diag )
+  &5 aaaa aaaa aaaa aaaa ( 1/2 vertical   )
+  &6 5555 5555 5555 5555 ( 1/2 horizontal )
+  &7 0044 0011 0044 0011 ( 1/8 sparse     )
+  &8 40a0 4000 0000 0000 ( 1/16 clumps    )
+
+@sprite
+  &left_chevron   1030 70f0 7030 1000
+  &cursor         80c0 e0f0 f8e0 1000
+  &capsule_half    7f80 8080 8080 807f
+  &blank          0000 0000 0000 0000
+
+
+~_user_interface_callbacks.tal
+
+@canvas_buffer
+

@@ -1,0 +1,51 @@
+@draw_line ( x0* y0* x1* y1* callback* -- )
+  ,&callback STR*                           ( x0* y0* x1* y1* )
+  ROT* STH* ROT* ROTk* NIP* SWP* STH*       ( x1* y1* : x0* x1*      | y0* y1* )
+  OVRk*                                     ( .. x0* x1* x0* x1* x0* | y0* y1* )
+
+  ( Store x0 )
+  ,&x_end STR*                              ( .. x0* x1* x0* x1* | y0* y1* )
+  ( Calculate and store xi )
+  ,&calc_xi_yi JSR ,&xi STR*               ( .. x0* x1*         | y0* y1* )
+  ( Calculate |dx| )
+  ,&abs_diff* JSR STH*                     ( ..                 | y0* y1* dx* )
+
+  ( Move y to working stack and explode )
+  ROTr* STHr* SWPr* STHr* OVRk*             ( .. y0* y1* y0* y1* y0* | dx* )
+
+  ( Store y0 )
+  ,&y_end STR*                              ( .. y0* y1* y0* y1*     | dx* )
+  ( Calculate and store yi )
+  ,&calc_xi_yi JSR ,&yi STR*               ( .. y0* y1*             | dx* )
+  ( Calculate -|dy| )
+  ,&abs_diff* JSR NEG* STH*                ( x1* y1* :              | dx* dy* )
+
+  ( e0 = dx + dy )
+  ADDkr*                                    ( x1* y1*                | dx* dy* e0* )
+
+  &loop                                     ( x* y*     | dx* dy* e0* )
+    ( Paint a pixel )
+    OVR* OVR* [ LIT* &callback $2 ] CALL
+    ( Jump to end if x=x0 and y=y0 )
+    OVR* [ LIT* &x_end $2 ] EQU* STH
+    DUP* [ LIT* &y_end $2 ] EQU* STHr
+    AND ,&end JCN                           ( x* y*     | dx* dy* e0* )
+
+    ( e1 = e0 * 2 )
+    DOUBLEkr* STHr*                         ( x* y* e1* | dx* dy* e0* )
+
+    ( If e1 >= dy: )                        ( x* y* e1* | dx* dy* e0* )
+    DUP* OVRr* STHr* ;lth_signed* CALL ,&skipy JCN
+        ( e0 += dy ) OVRr* ADDr*
+        ( x += xi ) ROT* [ LIT* &xi $2 ] ADD* ROT* ROT*
+        &skipy
+    ( If e1 <= dx: )                        ( x* y* e1* | dx* dy* e0* )
+    ROTr* STHkr* ROTr* ROTr* ;gth_signed* CALL ,&skipx JCN
+        ( e0 += dx ) STHr* OVRr* STH* ADDr*
+        ( y += yi ) [ LIT* &yi $2 ] ADD*
+        &skipx
+    ,&loop JMP                              ( x* y*     | dx* dy* e0* )
+  &end  POP* POP* POPr* POPr* POPr* RETURN  ( -- )
+  &abs_diff* SUB* ABS* RETURN               ( a* b* -- |a-b| )
+  &calc_xi_yi  ( x0 x1 -- xi )
+    ;gth_signed* CALL TO_SHORT DOUBLE* #ffff ADD* RETURN

@@ -1,0 +1,77 @@
+
+
+%PRINTF(\s)     { ;print_space CALL }
+%PRINTF(\n)     { ;print_newline CALL }
+%PRINTF(%s)     { ;print_string CALL }
+%PRINTF(%s\s)   { PRINTF(%s) PRINTF(\s) }
+%PRINTF(%s\n)   { PRINTF(%s) PRINTF(\n) }
+%PRINTF(%d)     { ;print_byte_decimal CALL }
+%PRINTF(%d\s)   { PRINTF(%d) PRINTF(\s) }
+%PRINTF(%d\n)   { PRINTF(%d) PRINTF(\n) }
+%PRINTF(%d*)    { ;print_short_decimal CALL }
+%PRINTF(%d*\s)  { PRINTF(%d*) PRINTF(\s) }
+%PRINTF(%d*\n)  { PRINTF(%d*) PRINTF(\n) }
+%PRINTF(%-d*)   { ;print_short_decimal_signed CALL }
+%PRINTF(%-d*\s) { PRINTF(%-d*) PRINTF(\s) }
+%PRINTF(%-d*\n) { PRINTF(%-d*) PRINTF(\n) }
+%PRINTF(%b)     { ;print_byte_binary CALL }
+%PRINTF(%b\s)   { PRINTF(%b) PRINTF(\s) }
+%PRINTF(%b\n)   { PRINTF(%b) PRINTF(\n) }
+%PRINTF(%?)     { ;print_bool CALL }
+%PRINTF(%?\s)   { PRINTF(%?) PRINTF(\s) }
+%PRINTF(%?\n)   { PRINTF(%?) PRINTF(\n) }
+%PRINTF(%?*)    { ;print_bool_short CALL }
+%PRINTF(%?*\s)  { PRINTF(%?) PRINTF(\s) }
+%PRINTF(%?*\n)  { PRINTF(%?) PRINTF(\n) }
+
+
+
+@print_newline LIT <LINEFEED> /CONSOLE.WRITE! RETURN
+@print_space   LIT <SPACE>    /CONSOLE.WRITE! RETURN
+
+( Print a byte to the console in binary )
+@print_byte_binary                        ( byte -- )
+  #80
+  &loop                                   ( byte mask )
+    ANDk TO_BOOL LIT* "01 CHOOSE            ( byte mask ascii )
+    /CONSOLE.WRITE! SHR1 DUP ,&loop JCN     ( byte mask )
+  &end POP* RETURN
+
+
+( Print a single byte to the console in decimal )
+@print_byte_decimal_signed               ( byte -- )
+  DUP* IS_POSITIVE ,print_byte_decimal JCN
+  LIT "- /CONSOLE.WRITE! NEGATE
+@print_byte_decimal                      ( byte -- )
+  ;convert_byte_to_decimal_string CALL
+  PRINTF(%s) RETURN
+
+( Print a single short to the console in decimal )
+@print_short_decimal_signed               ( short* -- )
+  DUP* IS_POSITIVE* ,print_short_decimal JCN
+  LIT "- /CONSOLE.WRITE! NEGATE*
+@print_short_decimal                      ( short* -- )
+  ;convert_short_to_decimal_string CALL
+  PRINTF(%s) RETURN
+
+( Print a null-terminated string to the console )
+@print_string                             ( text_addr* -- )
+  &loop  LDAk DUP ,&print JCN POP POP* RETURN
+  &print /CONSOLE.WRITE! INC* ,&loop JMP
+
+( Print a value as TRUE or FALSE )
+@print_bool_short                         ( bool* -- )
+  TO_BOOL*
+@print_bool                               ( bool -- )
+  ;&true ROT ,&print JCN POP* ;&false &print PRINTF(%s) RETURN
+  &true  "TRUE <NULL>  &false "FALSE <NULL>
+
+
+( Print a region of memory to the console as shorts, excluding the end address )
+@print_memory_region_shorts  ( start* end* -- )
+  SWP*
+  &loop
+    EQUk* ,&end JCN
+    LDAk* PRINTF(%d*\s)
+    INC* INC* ,&loop JMP
+  &end POP* POP* PRINTF(\n) RETURN

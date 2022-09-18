@@ -1,0 +1,14 @@
+( Convert an integer to a null-terminated string )
+@convert_byte_to_decimal_string           ( byte -- text_addr* )
+  TO_SHORT
+@convert_short_to_decimal_string          ( value* -- text_addr* )
+  ;&array_end SWP*
+  &loop                                   ( addr* value* )
+    #000a DIVMOD*                           ( addr* value/10* digit* )
+    DIGIT_TO_ASCII                          ( addr* value* junk ascii )
+    ROT* STAk NIP* DEC* SWP*                ( addr-1* value* )
+    DUP* ADD ,&loop JCN                     ( addr* value* )
+  &end
+    POP* INC* RETURN                        ( text_addr* )
+  &array $4 &array_end $1 <NULL>
+

@@ -1,0 +1,80 @@
+( Convert between pixel colours [0,1,2,3] and sprite foreground colours [0,4,8,c] )
+%TO_SPRITE_COLOUR { SHL2 }
+%TO_PIXEL_COLOUR  { SHR2 }
+
+( ---------------------------------------------------------------------------- )
+(                U S E R   I N T E R F A C E   E L E M E N T S                 )
+
+( Draw a variable-width 11-high button with a centered text label )
+@draw_button                              ( sprite_colour width* text_addr* -- )
+  /SCREEN.X? STH* STH* STH*                 ( s_colour | startx* t_addr* width* )
+  DUP TO_PIXEL_COLOUR                       ( s_colour p_colour | startx* t_addr* width* )
+  STHkr* #000b ;draw_capsule CALL           ( s_colour | startx* t_addr* width* )
+ ( Draw text in center of button )
+  /SCREEN.Y? INC* INC* /SCREEN.Y!           ( s_colour | startx* t_addr* width* )
+  SWPr* STHr* STHr*                         ( s_colour t_addr* width* | startx* )
+  OVR* ;get_text_width CALL SUB* HALVE*      ( s_colour t_addr* t_x_offset* | startx* )
+  STHkr* ADD* /SCREEN.X! ;draw_text CALL    ( s_colour t_addr* | startx* )
+ ( Return pointer to initial position )
+  STHr* /SCREEN.X!                          ( -- )
+  /SCREEN.Y? #0002 SUB* /SCREEN.Y!          ( -- )
+  RETURN                                    ( -- )
+
+( Draw a 10x10 square button containing an 8x8 2-bit icon sprite )
+@draw_icon_button                         ( s_colour sprite_addr* -- )
+  /SCREEN.ADDR! DUP TO_PIXEL_COLOUR         ( s_colour p_colour )
+  #000a DUP* ;draw_capsule CALL             ( s_colour )
+  r/SCREEN.X? INCkr* r/SCREEN.X!            ( s_colour | startx* )
+  r/SCREEN.Y? INCkr* r/SCREEN.Y!            ( s_colour | startx* starty* )
+  /SCREEN.SPRITE!                           ( | startx* starty* )
+  r/SCREEN.Y! r/SCREEN.X! RETURN            ( -- )
+
+
+( Draw a two-option selector, 13-high. )
+@draw_toggle ( bg_colour fg_colour width* text_addr_1* text_addr_2* value -- )
+ ( Store calculated values )
+  r/SCREEN.Y? r/SCREEN.X? STH               ( ... | y* x* val )
+  ,&text_addr_2 STR* ,&text_addr_1 STR*     ( bg fg width* | y* x* val )
+  DUP* #0004 SUB* HALVE* ,&half_width STR*  ( bg fg width* | y* x* val )
+  DUP* #0001 AND* ,&pad STR* ,&width STR*   ( bg fg | y* x* val )
+ ( Convert [<edge,inner> <active,text>] to [<edge,inner> <active,text> <inner,text>] )
+  SWPk #03 AND SHL2 SWP #03 AND ORA         ( bg active inactive | y* x* val )
+  STHr JMP SWP                              ( bg right left | y* x* )
+  ,&left_colour STR ,&right_colour STR      ( bg | y* x* )
+ ( Draw edge )
+  DUP SHR2 [ LIT* &width $2 ]               ( bg edge width* | y* x* )
+  #000d ;draw_capsule CALL                  ( bg | y* x* )
+ ( Draw inner fill )
+  MOVE_RIGHT_1 MOVE_DOWN_1                  ( bg | y* x* )
+  #03 AND ,&width LDR* #0002 SUB*           ( inner width* | y* x* )
+  #000b ;draw_capsule CALL                  ( | y* x* )
+ ( Draw left option )
+  [ LIT &left_colour $1 ] [ LIT* &half_width $2 ]
+  [ LIT* &text_addr_1 $2 ] ;draw_button CALL
+  ,&half_width LDR* ADD2* [ LIT* &pad $2 ] ADD* MOVE_RIGHT
+ ( Draw right option )
+  [ LIT &right_colour $1 ] ,&half_width LDR*
+  [ LIT* &text_addr_2 $2 ] ;draw_button CALL
+  r/SCREEN.X! r/SCREEN.Y!
+  RETURN
+
+
+( Draw a numeric input widget )
+@draw_numeric_input ( colour width* number* active -- )
+  /SCREEN.X? ,&start_x STR*
+  STH STH* STH*                              ( colour | active number* width* )
+  DUP  ,&colour STR STHr*                    ( colour width* | active number* )
+  DUP* ,&width STR* STHr*                    ( colour width* number* | active )
+  ;convert_short_to_decimal_string CALL      ( colour width* text_addr* | active )
+  ;draw_button CALL                          ( -- | active )
+  STHr JMP RETURN                            ( // return if inactive )
+  ;sprite/left_chevron /SCREEN.ADDR!
+  #0002 MOVE_DOWN #0002 MOVE_RIGHT                    ( // position cursor for left-arrow )
+  ,&colour LDR /SCREEN.SPRITE!               ( // draw left arrow )
+  ,&width LDR* #000c SUB* MOVE_RIGHT              ( // position cursor for right-arrow )
+  ,&colour LDR AND_FLIPX /SCREEN.SPRITE!
+  [ LIT* &start_x $2 ] /SCREEN.X!
+  #0002 MOVE_UP
+  RETURN
+  &colour $1  &width $2
+

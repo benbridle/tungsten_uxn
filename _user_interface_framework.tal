@@ -1,0 +1,306 @@
+( ---------------------------------------------------------------------------- )
+(                U S E R   I N T E R F A C E   F R A M E W O R K               )
+(                                                                              )
+( A declarative callback-driven graphical user interface framework.            )
+
+( The coordinates of the center of the screen )
+%/I.CENTER.X        { #e3 }     %/I.CENTER.X?        { #e3 LDZ* }     %/I.CENTER.X!        { #e3 STZ* }
+%/I.CENTER.Y        { #e5 }     %/I.CENTER.Y?        { #e5 LDZ* }     %/I.CENTER.Y!        { #e5 STZ* }
+( The last-known position of the mouse cursor )
+%/I.CURSOR.X        { #e7 }     %/I.CURSOR.X?        { #e7 LDZ* }     %/I.CURSOR.X!        { #e7 STZ* }
+%/I.CURSOR.Y        { #e9 }     %/I.CURSOR.Y?        { #e9 LDZ* }     %/I.CURSOR.Y!        { #e9 STZ* }
+( Edge states for mouse and controller )
+%/I.BUTTON.PRESSED  { #eb }     %/I.BUTTON.PRESSED?  { #eb LDZ }      %/I.BUTTON.PRESSED!  { #eb STZ }
+%/I.BUTTON.HELD     { #ec }     %/I.BUTTON.HELD?     { #ec LDZ }      %/I.BUTTON.HELD!     { #ec STZ }
+%/I.BUTTON.RELEASED { #ed }     %/I.BUTTON.RELEASED? { #ed LDZ }      %/I.BUTTON.RELEASED! { #ed STZ }
+%/I.MOUSE.PRESSED   { #ee }     %/I.MOUSE.PRESSED?   { #ee LDZ }      %/I.MOUSE.PRESSED!   { #ee STZ }
+%/I.MOUSE.HELD      { #ef }     %/I.MOUSE.HELD?      { #ef LDZ }      %/I.MOUSE.HELD!      { #ef STZ }
+%/I.MOUSE.RELEASED  { #f0 }     %/I.MOUSE.RELEASED?  { #f0 LDZ }      %/I.MOUSE.RELEASED!  { #f0 STZ }
+( The index of the currently-selected and previously-selected UI element )
+%/I.ACTIVE_ELEMENT   { #f1 }    %/I.ACTIVE_ELEMENT?  { #f1 LDZ }      %/I.ACTIVE_ELEMENT!  { #f1 STZ }
+%/I.PREV_ELEMENT     { #f2 }    %/I.PREV_ELEMENT?    { #f2 LDZ }      %/I.PREV_ELEMENT!    { #f2 STZ }
+%/I.NUM_ELEMENTS     { #f3 }    %/I.NUM_ELEMENTS?    { #f3 LDZ }      %/I.NUM_ELEMENTS!    { #f3 STZ }
+( The position of the mouse when each mouse button was pressed )
+%/I.MOUSE1.X         { #f4 }    %/I.MOUSE1.X?        { #f4 LDZ* }     %/I.MOUSE1.X!        { #f4 STZ* }
+%/I.MOUSE1.Y         { #f6 }    %/I.MOUSE1.Y?        { #f6 LDZ* }     %/I.MOUSE1.Y!        { #f6 STZ* }
+%/I.MOUSE2.X         { #f8 }    %/I.MOUSE2.X?        { #f8 LDZ* }     %/I.MOUSE2.X!        { #f8 STZ* }
+%/I.MOUSE2.Y         { #fa }    %/I.MOUSE2.Y?        { #fa LDZ* }     %/I.MOUSE2.Y!        { #fa STZ* }
+%/I.MOUSE3.X         { #fc }    %/I.MOUSE3.X?        { #fc LDZ* }     %/I.MOUSE3.X!        { #fc STZ* }
+%/I.MOUSE3.Y         { #fe }    %/I.MOUSE3.Y?        { #fe LDZ* }     %/I.MOUSE3.Y!        { #fe STZ* }
+( Recall and register callbacks for raw input event handling )
+%/I.CALLBACK.LEFT?   { ;ui__callbacks/left    LDA* }     %/I.CALLBACK.LEFT!   { ;ui__callbacks/left    STA* }
+%/I.CALLBACK.RIGHT?  { ;ui__callbacks/right   LDA* }     %/I.CALLBACK.RIGHT!  { ;ui__callbacks/right   STA* }
+%/I.CALLBACK.UP?     { ;ui__callbacks/up      LDA* }     %/I.CALLBACK.UP!     { ;ui__callbacks/up      STA* }
+%/I.CALLBACK.DOWN?   { ;ui__callbacks/down    LDA* }     %/I.CALLBACK.DOWN!   { ;ui__callbacks/down    STA* }
+%/I.CALLBACK.A?      { ;ui__callbacks/A       LDA* }     %/I.CALLBACK.A!      { ;ui__callbacks/A       STA* }
+%/I.CALLBACK.B?      { ;ui__callbacks/B       LDA* }     %/I.CALLBACK.B!      { ;ui__callbacks/B       STA* }
+%/I.CALLBACK.START?  { ;ui__callbacks/start   LDA* }     %/I.CALLBACK.START!  { ;ui__callbacks/start   STA* }
+%/I.CALLBACK.SELECT? { ;ui__callbacks/select  LDA* }     %/I.CALLBACK.SELECT! { ;ui__callbacks/select  STA* }
+%/I.CALLBACK.MOUSE1? { ;ui__callbacks/mouse1  LDA* }     %/I.CALLBACK.MOUSE1! { ;ui__callbacks/mouse1  STA* }
+%/I.CALLBACK.MOUSE2? { ;ui__callbacks/mouse2  LDA* }     %/I.CALLBACK.MOUSE2! { ;ui__callbacks/mouse2  STA* }
+%/I.CALLBACK.MOUSE3? { ;ui__callbacks/mouse3  LDA* }     %/I.CALLBACK.MOUSE3! { ;ui__callbacks/mouse3  STA* }
+
+( Convenience macros for setting the screen coordinates relative to center )
+%CENTER_LEFT?  { /I.CENTER.X? SWP* SUB* }   %CENTER_LEFT!  { CENTER_LEFT?  /SCREEN.X! }
+%CENTER_RIGHT? { /I.CENTER.X? ADD* }        %CENTER_RIGHT! { CENTER_RIGHT? /SCREEN.X! }
+%CENTER_UP?    { /I.CENTER.Y? SWP* SUB* }   %CENTER_UP!    { CENTER_UP?    /SCREEN.Y! }
+%CENTER_DOWN?  { /I.CENTER.Y? ADD* }        %CENTER_DOWN!  { CENTER_DOWN? /SCREEN.Y! }
+
+
+( Draw all UI elements )
+@ui__draw_all /I.NUM_ELEMENTS? #00        ( -- )
+   &loop EQUk ,&end JCN                     ( total index )
+    DUP ;ui__draw_single CALL               ( total index )
+    INC ,&loop JMP                          ( total index )
+  &end POP* RETURN                          ( -- )
+
+( Draw a single UI element by index )
+@ui__draw_single                          ( index -- )
+  STHk /I.ACTIVE_ELEMENT? EQU               ( active? | index )
+  #00 STHr DOUBLE* ;ui__callbacks/draw ADD* ( active? slot_addr* )
+  LDA* CALLRETURN                           ( active? )
+
+( Call the callback for a single UI element by index, [ index -- ] )
+@ui__press_go          ;ui__callbacks/go     ,__ui__call_callback JMP
+@ui__press_inc #01 SWP ;ui__callbacks/change ,__ui__call_callback JMP
+@ui__press_dec #ff SWP ;ui__callbacks/change ( ... jump elided ... )
+( Calculate the real address of a callback and call )
+@__ui__call_callback                      ( index callback_block_start_addr* )
+  ROT TO_SHORT DOUBLE ADD* LDA* CALL        ( real_callback_addr* )
+  ;ui__redraw_controls CALLRETURN           ( -- )
+
+( Register a separate callback for each user interface element.
+  Each of the following subroutines accepts a list of pairs of a control index
+  and a callback address, followed by the number of pairs that were provided.
+  For example:   [ #00 ;func0 #01 ;func1 #04 ;func4 #03 ]
+  Draw callbacks MUST consume the 1-byte 'active?' bool that is passed to them.
+  Change callbacks MUST consume the 1-byte 'delta' that is passed to them (is either -1 or 1).
+  Go callbacks do not receive any data.
+  Callbacks SHOULD consume the return address on the return stack by calling
+  either RETURN or NORETURN.
+  Signature for each 'register' subroutine is: [index callback*]+ count -- )
+@ui__register_draw_callbacks   ;ui__callbacks/draw   ,__ui__register_callbacks JMP
+@ui__register_change_callbacks ;ui__callbacks/change ,__ui__register_callbacks JMP
+@ui__register_go_callbacks     ;ui__callbacks/go     ( ... jump elided ... )
+@__ui__register_callbacks                 ( [index callback*]+ count block_addr* -- )
+  ,&block_addr STR*                         ( [index callback*]+ count )
+  &loop                                     ( [index callback*]+ count )
+    STH ROT DOUBLE TO_SHORT                 ( ... callback* offset* | count )
+    [ LIT* &block_addr $2 ] ADD* STA*       ( ... | count )
+    STHr DEC DUP ,&loop JCN                 ( ... count )
+  POP RETURN                                ( -- )
+
+( Register a single screen zone for each of multiple UI elements )
+@ui__register_zones                       ( [index left* top* width* height*]+ count -- )
+  ( Note: We decrement right* and bottom* because the bounds of the zone are inclusive )
+  &loop                                   ( ... index left* top* width* height* count )
+    STH STH* STH* STH* STH*                 ( ... index | count height* width* top* left* )
+    TO_SHORT MUL8* ;ui__zones ADD*          ( ... zone_left_addr* | count height* width* top* left* )
+    STHkr* ROTr* ADDr* DECr* STHr*          ( ... zone_left_addr* left* right* | count height* top* )
+    STHkr* ADDr* DECr* STH* STH*            ( ... zone_left_addr* left*  | count bottom* top* right* )
+    OVR* STA* ADD2*                         ( ... zone_right_addr* | count bottom* top* right* )
+    STHr* OVR* STA* ADD2*                   ( ... zone_top_addr* | count bottom* top* )
+    STHr* OVR* STA* ADD2*                   ( ... zone_bottom_addr* | count bottom* )
+    STHr* SWP* STA* STHr                    ( ... count )
+    DEC DUP ,&loop JCN
+  POP RETURN
+
+( Call to activate the declared user interface )
+@ui__run_blank                            ( -- )
+  #0000
+@ui__run                                  ( active_element total_elements -- )
+  /I.NUM_ELEMENTS! DUP /I.ACTIVE_ELEMENT! /I.PREV_ELEMENT!
+  ;ui__draw_all CALL
+  ;ui__on_screen /SCREEN.VECTOR!
+  ;ui__on_mouse /MOUSE.VECTOR!
+  ;ui__on_controller /CONTROLLER.VECTOR!
+  ( Clear both of the stacks, in case junk data has been left on them )
+  #0000 /SYSTEM.RST! /SYSTEM.WST! BRK
+
+( Clears all of the callbacks and zones that were defined by the previous
+  screen, and wipes the foreground layer of the screen device. Call this
+  subroutine before declaring the UI for a new screen. )
+@ui__initialise
+@ui__clear
+ ( Clear mouse button state, to prevent weird clicks when the new UI comes up )
+  #0000 DUP /I.MOUSE.PRESSED! /I.MOUSE.HELD! /I.MOUSE.RELEASED!
+  ( Recalculate the center of the screen )
+  /SCREEN.WIDTH?  HALVE* /I.CENTER.X! /SCREEN.HEIGHT? HALVE* /I.CENTER.Y!
+  ;clear_foreground CALL
+  ;ui__callbacks      ;ui__callbacks/end ;&null_callback     ,__ui__clear_memory_region JSR
+  ;ui__callbacks/draw ;ui__callbacks/end ;&pop_null_callback ,__ui__clear_memory_region JSR
+  ;ui__zones          ;ui__zones/end     #0000               ,__ui__clear_memory_region JMP
+  &pop_null_callback POP   &null_callback RETURN
+( Fill a region of memory with a repeated value. Address includes `start_addr`, but excludes `end_addr`. )
+@__ui__clear_memory_region                  ( start_addr* end_addr* value* -- )
+  STH* SWP*                                 ( end* addr* | val* )
+  &loop                                     ( end* addr* | val* )
+    EQUk* ,&end JCN                         ( end* addr* | val* )
+    STHkr* OVR* STA*                        ( addr* )
+    ADD2* ,&loop JMP                    ( end* addr* | val* )
+  &end POP* POP* POPr* RETURN
+
+( Mouse vector )
+@ui__on_mouse                             ( -- )
+  ( TODO: Add back in the mouse2 stuff )
+
+  ( Update the mouse button state variables )
+  /MOUSE.STATE? DUP /I.MOUSE.HELD? DUPk*    ( held now prev now prev now prev )
+  EOR AND SWP SWP* EOR AND                  ( held released pressed )
+  /I.MOUSE.PRESSED! /I.MOUSE.RELEASED! /I.MOUSE.HELD!
+
+  ;ui__callbacks/mouse1 LDA* ,&mouse_callback STR* BITMASK_1 ,&mouse_mask STR
+  ;ui__start_mouse1_drag ,&start_drag_callback STR*
+  ,&mouse_pressed  JSR
+  ,&mouse_held     JSR
+  ,&mouse_released JSR
+  ;ui__callbacks/mouse2 LDA* ,&mouse_callback STR* BITMASK_2 ,&mouse_mask STR
+  ;ui__start_mouse2_drag ,&start_drag_callback STR*
+  ,&mouse_pressed  JSR
+  ,&mouse_held     JSR
+  ,&mouse_released JSR
+  ;ui__callbacks/mouse3 LDA* ,&mouse_callback STR* BITMASK_3 ,&mouse_mask STR
+  ;ui__start_mouse3_drag ,&start_drag_callback STR*
+  ,&mouse_pressed  JSR
+  ,&mouse_held     JSR
+  ,&mouse_released JSR
+
+  ,&process_cursor  JSR
+  ;ui__update_cursor_position CALL
+  BRK
+
+  &return_if_not ( byte -- )
+    [ LIT &mouse_mask $1 ] IF_NOT_MASK NORETURN RETURN
+  &mouse_callback $2
+
+  &mouse_pressed
+    /I.MOUSE.PRESSED? ,&return_if_not JSR
+    ;ui__press_go ;ui__call_on_hovered_element CALL
+    [ LIT* &start_drag_callback $2 ] CALL
+    #ff ;&mouse_callback LDA* CALLRETURN
+  &mouse_held
+    /I.MOUSE.HELD? ,&return_if_not JSR
+    ,&return_if_cursor_not_moved JSR
+    #00 ;&mouse_callback LDA* CALLRETURN
+  &mouse_released
+    /I.MOUSE.RELEASED? ,&return_if_not JSR
+    #01 ;&mouse_callback LDA* CALLRETURN
+
+  &return_if_cursor_not_moved                 ( -- )
+    /I.CURSOR.X? /MOUSE.X? NEQ*             ( diff_x? )
+    /I.CURSOR.Y? /MOUSE.Y? NEQ*             ( diff_x? diff_y? )
+    ORA IF_FALSE NORETURN RETURN            ( -- )
+  &process_cursor
+    ,&return_if_cursor_not_moved JSR
+    ;ui__redraw_cursor CALL
+    ;ui__set_active_control ;ui__call_on_hovered_element CALLRETURN
+
+
+
+@ui__redraw_cursor
+  ;sprite/cursor /SCREEN.ADDR!
+ ( Erase the mouse cursor from the previous mouse position )
+  /I.CURSOR.X? /SCREEN.X! /I.CURSOR.Y? /SCREEN.Y!
+  COL_00_FG /SCREEN.SPRITE!
+ ( Draw the mouse cursor under the current mouse position )
+  /MOUSE.X? /SCREEN.X! /MOUSE.Y? /SCREEN.Y!
+  COL_T1_FG /SCREEN.SPRITE!
+  RETURN
+
+@ui__start_mouse1_drag                    ( -- )
+  /I.MOUSE1.X /I.MOUSE1.Y ,_ui__store_cursor_position JMP
+@ui__start_mouse2_drag                    ( -- )
+  /I.MOUSE2.X /I.MOUSE2.Y ,_ui__store_cursor_position JMP
+@ui__start_mouse3_drag                    ( -- )
+  /I.MOUSE3.X /I.MOUSE3.Y ,_ui__store_cursor_position JMP
+@ui__update_cursor_position               ( -- )
+  /I.CURSOR.X /I.CURSOR.Y ( ,_ui__store_cursor_position JMP )
+@_ui__store_cursor_position               ( x_variable y_variable )
+  /MOUSE.Y? ROT STZ* /MOUSE.X? ROT STZ* RETURN
+
+( The main controller logic, this handles all interactions with the declared
+  user interface )
+@ui__on_controller
+ ( Update the controller states )
+  /CONTROLLER.BUTTON? DUP /I.BUTTON.HELD? DUPk*    ( held now prev now prev now prev )
+  EOR AND SWP SWP* EOR AND                         ( held released pressed )
+  /I.BUTTON.PRESSED! /I.BUTTON.RELEASED! /I.BUTTON.HELD!
+
+  /I.BUTTON.PRESSED? IF_FALSEY BRK
+  ( mask              user_callback_address  ui_logic )
+  BUTTON_MASK_UP      ;ui__callbacks/up      ;&prev   ,&call_if_pressed JSR
+  BUTTON_MASK_DOWN    ;ui__callbacks/down    ;&next   ,&call_if_pressed JSR
+  BUTTON_MASK_LEFT    ;ui__callbacks/left    ;&dec    ,&call_if_pressed JSR
+  BUTTON_MASK_RIGHT   ;ui__callbacks/right   ;&inc    ,&call_if_pressed JSR
+  BUTTON_MASK_A       ;ui__callbacks/A       ;&go     ,&call_if_pressed JSR
+  BUTTON_MASK_B       ;ui__callbacks/B       ;&null   ,&call_if_pressed JSR
+  BUTTON_MASK_START   ;ui__callbacks/start   ;&null   ,&call_if_pressed JSR
+  BUTTON_MASK_SELECT  ;ui__callbacks/select  ;&null   ,&call_if_pressed JSR BRK
+  ( Call two callbacks if the button matching this mask was pressed.
+    Calls a UI logic callback and a user-provided callback. )
+  &call_if_pressed                        ( mask user_callback* ui_callback* -- )
+    ,&ui_callback STR* LDA* ,&user_callback STR* ( mask )
+    /I.BUTTON.PRESSED? IF_NOT_MASK RETURN        ( -- )
+    /I.ACTIVE_ELEMENT?                           ( active )
+    [ LIT* &ui_callback $2 ]   CALL              ( -- )
+    [ LIT* &user_callback $2 ] CALLRETURN        ( -- )
+  &dec   ;ui__press_dec CALLRETURN
+  &inc   ;ui__press_inc CALLRETURN
+  &go    ;ui__press_go  CALLRETURN
+  &next #01 [ INCk JMP ]
+  &prev #ff ADD /I.NUM_ELEMENTS? ;clamp CALL ;ui__set_active_control CALLRETURN
+  &null RETURN
+
+( Redraw the active and previously-active controls, and set prev_active to active )
+@ui__redraw_controls                      ( -- )
+ ( Return early if no controls have been registered )
+  /I.NUM_ELEMENTS? ,&cont JCN RETURN &cont
+  /I.ACTIVE_ELEMENT? /I.PREV_ELEMENT?       ( active prev_active )
+  ;ui__draw_single CALL                     ( active // draw prev_active input )
+  DUP /I.PREV_ELEMENT!                      ( active )
+  ;ui__draw_single CALLRETURN
+
+( Update the active control and redraw prev and active controls )
+@ui__set_active_control                   ( index -- )
+  DUP /I.ACTIVE_ELEMENT? NEQ ,&cont JCN POP RETURN &cont
+  /I.ACTIVE_ELEMENT! ;ui__redraw_controls CALLRETURN
+
+( If there is a control under the mouse cursor, push the index of that
+  control to the stack and call the given routine. The index must be
+  consumed by the routine. )
+@ui__call_on_hovered_element #00          ( func_addr* -- )
+  &loop                                   ( f_addr* i )
+    /I.NUM_ELEMENTS? OVR GTH ,&cont JCN     ( f_addr* i )
+    POP POP* RETURN                         ( // -- )
+  &cont                                   ( f_addr* i )
+    DUP TO_SHORT MUL8*                      ( f_addr* i ix8* )
+    ;ui__zones ADD*                         ( f_addr* i zone_left_addr* )
+   ( Test horizontal bounds )
+    /I.CURSOR.X? OVR* LDA* LTH* STH         ( f_addr* i zone_left_addr* | lth_left? )
+    #0002 ADD*                              ( f_addr* i zone_right_addr* | lth_left? )
+    /I.CURSOR.X? OVR* LDA* GTH* STHr        ( f_addr* i zone_right_addr* gth_right? lth_left? )
+    ADD ,&no_match JCN #0002 ADD*           ( f_addr* i zone_top_addr* )
+   ( Test vertical bounds )
+    /I.CURSOR.Y? OVR* LDA* LTH* STH         ( f_addr* i zone_top_addr* | lth_top? )
+    #0002 ADD*                              ( f_addr* i zone_bot_addr* )
+    /I.CURSOR.Y? OVR* LDA* GTH* STHr        ( f_addr* i zone_top_addr* gth_bot? lth_top? )
+    ADD ,&no_match JCN POP* ,&match JMP     ( // varies )
+  &no_match                               ( f_addr* i junk_addr* )
+    POP* INC ,&loop JMP                     ( f_addr* i )
+  &match                                  ( f_addr* i )
+    ROT ROT GOTO                            ( i )
+
+@ui__on_screen                            ( -- )
+  ;&counter LDAk* INC* SWP* STA* BRK &counter $2 ( // increment the frame counter )
+
+( Load the colour palette from the .theme file, returning 1 on success )
+@ui__initialise_colour_palette            ( -- success? )
+  ( TODO: Implement .theme file loading )
+  PANIC
+
+( Load a colour palette from an address in memory )
+@ui__load_colour_palette                  ( colour_palette_addr* -- )
+  LDAk* /SYSTEM.RED!   ADD2*
+  LDAk* /SYSTEM.GREEN! ADD2*
+  LDA*  /SYSTEM.BLUE!  RETURN
+

@@ -1,0 +1,156 @@
+( ---------------------------------------------------------------------------- )
+(                           M A C R O   T O O L B O X                          )
+
+%GTH0         { }
+%GTH0*        { ORA }
+%ADD2*        { INC* INC* }
+%CALL         { JSR* }
+%GOTO         { JMP* }
+%RETURN       { JMPr* }
+%CALLRETURN   { JMP* }
+%NORETURN     { POPr* }
+%NOP          { POPk }
+
+%DOUBLE   { DUP   ADD   }  %DOUBLE*   { DUP*   ADD*  }
+%DOUBLEkr { DUPkr ADDr  }  %DOUBLEkr* { DUPkr* ADDr* }
+
+%SHL1 { #10 SFT }   %SHL1* { #10 SFT* }
+%SHL2 { #20 SFT }   %SHL2* { #20 SFT* }
+%SHL3 { #30 SFT }   %SHL3* { #30 SFT* }
+%SHL4 { #40 SFT }   %SHL4* { #40 SFT* }
+%SHL5 { #50 SFT }   %SHL5* { #50 SFT* }
+%SHL6 { #60 SFT }   %SHL6* { #60 SFT* }
+%SHL7 { #70 SFT }   %SHL7* { #70 SFT* }
+%SHL8 { #80 SFT }   %SHL8* { #80 SFT* }
+%SHR1 { #01 SFT }   %SHR1* { #01 SFT* }
+%SHR2 { #02 SFT }   %SHR2* { #02 SFT* }
+%SHR3 { #03 SFT }   %SHR3* { #03 SFT* }
+%SHR4 { #04 SFT }   %SHR4* { #04 SFT* }
+%SHR5 { #05 SFT }   %SHR5* { #05 SFT* }
+%SHR6 { #06 SFT }   %SHR6* { #06 SFT* }
+%SHR7 { #07 SFT }   %SHR7* { #07 SFT* }
+%SHR8 { #08 SFT }   %SHR8* { #08 SFT* }
+
+%MUL4   { SHL2 }   %MUL4*   { SHL2* }
+%MUL8   { SHL3 }   %MUL8*   { SHL3* }
+%MUL16  { SHL4 }   %MUL16*  { SHL4* }
+%MUL32  { SHL5 }   %MUL32*  { SHL5* }
+%MUL64  { SHL6 }   %MUL64*  { SHL6* }
+%MUL128 { SHL7 }   %MUL128* { SHL7* }
+%MUL256 { SHL8 }   %MUL256* { SHL8* }
+
+%HALVE  { SHR1 }   %HALVE*  { SHR1* }
+%DIV4   { SHR2 }   %DIV4*   { SHR2* }
+%DIV8   { SHR3 }   %DIV8*   { SHR3* }
+%DIV16  { SHR4 }   %DIV16*  { SHR4* }
+%DIV32  { SHR5 }   %DIV32*  { SHR5* }
+%DIV64  { SHR6 }   %DIV64*  { SHR6* }
+%DIV128 { SHR7 }   %DIV128* { SHR7* }
+%DIV256 { SHR8 }   %DIV256* { SHR8* }
+
+
+
+%FLOOR8     { #07 EOR        }   %FLOOR8*     { #0007 EOR*         }
+%CEIL8      { #07 ADD FLOOR8 }   %CEIL8*      { #0007 ADD* FLOOR8* }
+%CEIL8DIV8  { #07 ADD DIV8   }   %CEIL8DIV8*  { #0007 ADD* DIV8*   }
+
+%MOD   { DIVk   MUL   SUB }   ( val  mod  -- remainder  )
+%MODr  { DIVkr  MULr  SUBr }  ( val  mod  -- remainder  )
+%MOD*  { DIVk*  MUL*  SUB* }  ( val* mod* -- remainder* )
+%MODr* { DIVkr* MULr* SUBr* } ( val* mod* -- remainder* )
+
+%MOD2  { #01 AND  }   %MOD2*  { #0001 AND* }
+%MOD4  { #03 AND  }   %MOD4*  { #0003 AND* }
+%MOD8  { #07 AND  }   %MOD8*  { #0007 AND* }
+%MOD16 { #0f AND  }   %MOD16* { #000f AND* }
+
+
+%DIVMOD   { DIVk MULk STH ROT STHr SUB ROT POP }         ( val mod -- quotient remainder )
+%DIVMOD*  { DIVk* MULk* STH* ROT* STHr* SUB* ROT* POP* } ( val* mod* -- quotient* remainder* )
+
+%DEC      { #01 SUB }             %DEC*     { #0001 SUB* }
+%DECr     { LITr 01 SUBr }        %DECr*    { LITr* 0001 SUBr* }
+%DECk     { DUP #01 SUB }         %DECk*    { DUP* #0001 SUB* }
+%DECkr    { DUPr LITr 01 SUBr }   %DECkr*   { DUPr* LITr* 0001 SUBr* }
+
+%MOVE_LEFT     { /SCREEN.X? SWP* SUB* /SCREEN.X! }
+%MOVE_RIGHT    { /SCREEN.X? ADD* /SCREEN.X! }
+%MOVE_UP       { /SCREEN.Y? SWP* SUB* /SCREEN.Y! }
+%MOVE_DOWN     { /SCREEN.Y? ADD* /SCREEN.Y! }
+
+%MOVE_LEFT_1   { /SCREEN.X? DEC* /SCREEN.X! }
+%MOVE_RIGHT_1  { /SCREEN.X? INC* /SCREEN.X! }
+%MOVE_UP_1     { /SCREEN.Y? DEC* /SCREEN.Y! }
+%MOVE_DOWN_1   { /SCREEN.Y? INC* /SCREEN.Y! }
+
+%BREAKPOINT    { #0101 /SYSTEM.DEBUG DEO* BRK }
+%DEBUG         { #01 /SYSTEM.DEBUG! }
+%HALT          { #01 /SYSTEM.HALT! BRK }
+%PANIC         { BREAKPOINT }
+
+%TO_SHORT         { #00 SWP }
+%DIGIT_TO_ASCII   { #30 ADD }
+%INDEX_TO_ASCII   { #20 ADD }
+%ASCII_TO_INDEX   { #20 SUB }
+
+%AND_FLIPX { #10 ORA }
+%AND_FLIPY { #20 ORA }
+%AND_FG    { #40 ORA }
+%AND_2BIT  { #80 ORA }
+
+
+
+%IF_FALSE      { JMP         }    ( value  -- )
+%IF_FALSE*     { NIP JMP     }    ( value* -- )
+%IF_FALSEY     { #01 JCN     }    ( value  -- )
+%IF_FALSEY*    { ORA #01 JCN }    ( value* -- )
+
+%IF_TRUE       { IF_TRUTHY   }
+%IF_TRUE*      { IF_TRUTHY*  }
+
+%IF_TRUTHY     { NOT  JMP }        ( value -- )
+%IF_TRUTHY*    { NOT* JMP }        ( value -- )
+%IF_EQUAL      { NEQ  JMP }        ( value1  value2  -- )
+%IF_EQUAL*     { NEQ* JMP }        ( value1* value2* -- )
+%IF_NOT_EQUAL  { EQU  JMP }        ( value1  value2  -- )
+%IF_NOT_EQUAL* { EQU* JMP }        ( value1* value2* -- )
+%IF_MASK       { AND  IF_TRUTHY  }  ( value1  value2  -- )
+%IF_MASK*      { AND* IF_TRUTHY* }  ( value1  value2  -- )
+%IF_NOT_MASK   { AND  IF_FALSEY  }  ( value1  value2  -- )
+%IF_NOT_MASK*  { AND* IF_FALSEY* }  ( value1  value2  -- )
+%TO_BOOL       { #00 GTH }
+%TO_BOOL*      { ORA TO_BOOL }
+%NOT           { #00 EQU }
+%NOT*          { ORA NOT }
+
+%INC_Z   { LDZk  INC  SWP STZ }
+%DEC_Z   { LDZk  DEC  SWP STZ }
+%INC_Z*  { LDZk* INC* ROT STZ* }
+%DEC_Z*  { LDZk* DEC* ROT STZ* }
+
+%INC_A   { LDAk  INC  ROT  ROT STA }
+%DEC_A   { LDAk  DEC  ROT  ROT STA }
+%INC_A*  { LDAk* INC* SWP* STA* }
+%DEC_A*  { LDAk* DEC* SWP* STA* }
+
+%INC_R   { PANIC }  ( Not possible to implement for relative addresses )
+%DEC_R   { PANIC }  ( Not possible to implement for relative addresses )
+%INC_R*  { PANIC }  ( Not possible to implement for relative addresses )
+%DEC_R*  { PANIC }  ( Not possible to implement for relative addresses )
+
+%<NULL>        { 00 }
+%<SPACE>       { 20 }
+%<LINEFEED>    { 0a }
+%CHOOSE        { ROT JMP SWP NIP } ( flag value0 value1 -- value )
+%CHOOSE*       { STH* ROT STHr* ROT JMP SWP* NIP* } ( flag value0* value1* -- value* )
+
+%IS_POSITIVE      { #80 LTH }
+%IS_POSITIVE*     { #8000 LTH* }
+%IS_NEGATIVE      { #7f GTH }
+%IS_NEGATIVE*     { #7fff GTH* }
+%ABS*             { DUP* #8000 LTH* #05 JCN #0000 SWP* SUB*  }
+
+%NEG              { LIT  00 SWP  SUB  }
+%NEGr             { LITr 00 SWPr SUBr }
+%NEG*             { LIT*  0000 SWP*  SUB* }
+%NEGr*            { LITr* 0000 SWPr* SUBr* }

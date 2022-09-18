@@ -1,0 +1,43 @@
+( Draw a rectange outline. Width and height must not be zero. )
+@draw_rect_outline                        ( colour width* height* )
+  /SCREEN.X? ,&startx STR*
+  /SCREEN.Y? ,&starty STR*
+  STH* STH* DUP #0001 SWP* STHkr*           ( 1* colour* width* | height* width* )
+  ;draw_horizontal_line CALL                ( 1* colour | height* width* )
+  DUP OVR* OVRr* STHr* ,&reset JSR          ( 1* colour* | height* width* )
+  STHkr* ;draw_horizontal_line CALL         ( 1* colour | height* width* )
+  DUP OVR* STHr* SWP* ,&reset JSR           ( 1* colour* | height* )
+  STHkr* ;draw_vertical_line CALL           ( 1* colour | height* )
+  DUP OVR* DUP* ,&reset JSR                 ( 1* colour* | height* )
+  POP STHr* ;draw_vertical_line CALL        ( -- )
+  DUP* ,&reset JMP
+  &reset
+    LIT* &starty $2 ADD* DEC* /SCREEN.Y!
+    LIT* &startx $2 ADD* DEC* /SCREEN.X!
+    RETURN
+
+( Draw a solid rectange. Width and height must not be zero. )
+@draw_rect_filled                         ( colour width* height* )
+  STH* ,&width STR* ,&colour STR STHr*      ( height* )
+  /SCREEN.Y? DUP* ROT* ADD* SWP*             ( target* starty* )
+  r/SCREEN.Y DEIkr* ROTr                       ( target* starty* | startx* port )
+  &loop                                   ( target* y* | startx* port )
+    [ LIT &colour $1 LIT* &width $2 ]       ( target* y* colour width* | startx* port )
+    ;draw_horizontal_line CALL              ( target* y* | startx* port )
+    INC* DUP* /SCREEN.Y!                     ( target* y+1* | startx* port )
+    NEQk* ,&loop JCN                        ( target* y* | startx* port )
+  ( Clean up and return )                 ( target* y* | startx* port )
+    POP* POP* DEOr* RETURN                  ( -- )
+
+( Draw a horizontal or vertical line. Line length must not be zero. )
+@draw_vertical_line #2a02 INCk JMP        ( colour height* -- )
+@draw_horizontal_line #2801                 ( colour width* -- )
+@__draw_line                              ( colour len* axis auto )
+  /SCREEN.AUTO! STH DEIkr* ROTr             ( colour len* axis | start* axis )
+  &loop                                   ( colour len* | start* axis )
+    ROTk /SCREEN.PIXEL! POP*                ( colour len* | start* axis )
+    DEC* DUP* #0000 NEQ* ,&loop JCN         ( colour len-1* | start* axis )
+  &end                                    ( colour len* | start* axis )
+    DEOr* /SCREEN.AUTO! POP* RETURN         ( -- )
+
+

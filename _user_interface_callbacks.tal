@@ -1,0 +1,33 @@
+( ---------------------------------------------------------------------------- )
+(                U S E R   I N T E R F A C E   C A L L B A C K S               )
+(                                                                              )
+
+( Callbacks are two-byte addresses )
+@ui__callbacks
+  ( TODO: Do something with this callback, or remove it )
+  &on_screen $2
+
+ ( One callback per UI element, signature [ -- ] )
+  &go     $32
+ ( One callback per controller button, signature [ -- ] )
+  &left   $2
+  &right  $2
+  &up     $2
+  &down   $2
+  &A      $2
+  &B      $2
+  &start  $2
+  &select $2
+ ( One callback per UI element, signature [ active? -- ] )
+  &draw   $32
+ ( One callback per UI element, signature [ delta -- ] )
+  &change $32
+ ( One callback per mouse action, signature [ state -- ]. 0: held, 1: released  )
+  &mouse1 $2
+  &mouse2 $2
+  &mouse3 $2
+  &end
+( TODO: Add byte to each of the 16 zones )
+( Zones are groups of left* right* top* bottom* inclusive bounds for each control )
+@ui__zones $128
+  &end

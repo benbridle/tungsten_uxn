@@ -1,1080 +1,1817 @@
-( ------------------------------------------------------------------------------- )
-(                        M A C R O   D E F I N I T I O N S                        )
+( ---------------------------------------------------------------------------- )
+(            I N S T R U C T I O N   R E N A M I N G   M A C R O S             )
 
-%SYSTEM.RED        { #08 }
-%SYSTEM.GREEN      { #0a }
-%SYSTEM.BLUE       { #0c }
-%SYSTEM.DEBUG      { #0e }
-%SYSTEM.HALT       { #0f }
-%CONSOLE.VECTOR    { #10 }
-%CONSOLE.READ      { #12 }
-%CONSOLE.WRITE     { #18 }
-%CONSOLE.ERROR     { #19 }
-%SCREEN.VECTOR     { #20 }
-%SCREEN.WIDTH      { #22 }
-%SCREEN.HEIGHT     { #24 }
-%SCREEN.AUTO       { #26 }
-%SCREEN.X          { #28 }
-%SCREEN.Y          { #2a }
-%SCREEN.ADDR       { #2c }
-%SCREEN.PIXEL      { #2e }
-%SCREEN.SPRITE     { #2f }
-%CONTROLLER.VECTOR { #80 }
-%CONTROLLER.BUTTON { #82 }
-%CONTROLLER.KEY    { #83 }
-%MOUSE.VECTOR      { #90 }
-%MOUSE.X           { #92 }
-%MOUSE.Y           { #94 }
-%MOUSE.STATE       { #95 }
-%MOUSE.WHEEL       { #96 }
+%LIT* { LIT2 }     %LITr* { LIT2r }     %LITk* { LIT2k }     %LITkr* { LIT2kr }
+%INC* { INC2 }     %INCr* { INC2r }     %INCk* { INC2k }     %INCkr* { INC2kr }
+%POP* { POP2 }     %POPr* { POP2r }     %POPk* { POP2k }     %POPkr* { POP2kr }
+%NIP* { NIP2 }     %NIPr* { NIP2r }     %NIPk* { NIP2k }     %NIPkr* { NIP2kr }
+%SWP* { SWP2 }     %SWPr* { SWP2r }     %SWPk* { SWP2k }     %SWPkr* { SWP2kr }
+%ROT* { ROT2 }     %ROTr* { ROT2r }     %ROTk* { ROT2k }     %ROTkr* { ROT2kr }
+%DUP* { DUP2 }     %DUPr* { DUP2r }     %DUPk* { DUP2k }     %DUPkr* { DUP2kr }
+%OVR* { OVR2 }     %OVRr* { OVR2r }     %OVRk* { OVR2k }     %OVRkr* { OVR2kr }
+%EQU* { EQU2 }     %EQUr* { EQU2r }     %EQUk* { EQU2k }     %EQUkr* { EQU2kr }
+%NEQ* { NEQ2 }     %NEQr* { NEQ2r }     %NEQk* { NEQ2k }     %NEQkr* { NEQ2kr }
+%GTH* { GTH2 }     %GTHr* { GTH2r }     %GTHk* { GTH2k }     %GTHkr* { GTH2kr }
+%LTH* { LTH2 }     %LTHr* { LTH2r }     %LTHk* { LTH2k }     %LTHkr* { LTH2kr }
+%JMP* { JMP2 }     %JMPr* { JMP2r }     %JMPk* { JMP2k }     %JMPkr* { JMP2kr }
+%JCN* { JCN2 }     %JCNr* { JCN2r }     %JCNk* { JCN2k }     %JCNkr* { JCN2kr }
+%JSR* { JSR2 }     %JSRr* { JSR2r }     %JSRk* { JSR2k }     %JSRkr* { JSR2kr }
+%STH* { STH2 }     %STHr* { STH2r }     %STHk* { STH2k }     %STHkr* { STH2kr }
+%LDZ* { LDZ2 }     %LDZr* { LDZ2r }     %LDZk* { LDZ2k }     %LDZkr* { LDZ2kr }
+%STZ* { STZ2 }     %STZr* { STZ2r }     %STZk* { STZ2k }     %STZkr* { STZ2kr }
+%LDR* { LDR2 }     %LDRr* { LDR2r }     %LDRk* { LDR2k }     %LDRkr* { LDR2kr }
+%STR* { STR2 }     %STRr* { STR2r }     %STRk* { STR2k }     %STRkr* { STR2kr }
+%LDA* { LDA2 }     %LDAr* { LDA2r }     %LDAk* { LDA2k }     %LDAkr* { LDA2kr }
+%STA* { STA2 }     %STAr* { STA2r }     %STAk* { STA2k }     %STAkr* { STA2kr }
+%DEI* { DEI2 }     %DEIr* { DEI2r }     %DEIk* { DEI2k }     %DEIkr* { DEI2kr }
+%DEO* { DEO2 }     %DEOr* { DEO2r }     %DEOk* { DEO2k }     %DEOkr* { DEO2kr }
+%ADD* { ADD2 }     %ADDr* { ADD2r }     %ADDk* { ADD2k }     %ADDkr* { ADD2kr }
+%SUB* { SUB2 }     %SUBr* { SUB2r }     %SUBk* { SUB2k }     %SUBkr* { SUB2kr }
+%MUL* { MUL2 }     %MULr* { MUL2r }     %MULk* { MUL2k }     %MULkr* { MUL2kr }
+%DIV* { DIV2 }     %DIVr* { DIV2r }     %DIVk* { DIV2k }     %DIVkr* { DIV2kr }
+%AND* { AND2 }     %ANDr* { AND2r }     %ANDk* { AND2k }     %ANDkr* { AND2kr }
+%ORA* { ORA2 }     %ORAr* { ORA2r }     %ORAk* { ORA2k }     %ORAkr* { ORA2kr }
+%EOR* { EOR2 }     %EORr* { EOR2r }     %EORk* { EOR2k }     %EORkr* { EOR2kr }
+%SFT* { SFT2 }     %SFTr* { SFT2r }     %SFTk* { SFT2k }     %SFTkr* { SFT2kr }
 
-%!CONSOLE.READ      { CONSOLE.READ DEI }
-%!SCREEN.WIDTH      { SCREEN.WIDTH DEI2 }
-%!SCREEN.HEIGHT     { SCREEN.HEIGHT DEI2 }
-%!SCREEN.X          { SCREEN.X DEI2 }
-%!SCREEN.Y          { SCREEN.Y DEI2 }
-%!CONTROLLER.BUTTON { CONTROLLER.BUTTON DEI }
-%!CONTROLLER.KEY    { CONTROLLER.KEY DEI }
-%!MOUSE.X           { MOUSE.X DEI2 }
-%!MOUSE.Y           { MOUSE.Y DEI2 }
-%!MOUSE.STATE       { MOUSE.STATE DEI }
-%!MOUSE.WHEEL       { MOUSE.WHEEL DEI }
 
-%>SYSTEM.RED        { SYSTEM.RED DEO2 }
-%>SYSTEM.GREEN      { SYSTEM.GREEN DEO2 }
-%>SYSTEM.BLUE       { SYSTEM.BLUE DEO2 }
-%>SYSTEM.DEBUG      { SYSTEM.DEBUG DEO }
-%>SYSTEM.HALT       { SYSTEM.HALT DEO }
-%>CONSOLE.VECTOR    { CONSOLE.VECTOR DEO2 }
-%>CONSOLE.WRITE     { CONSOLE.WRITE DEO }
-%>CONSOLE.ERROR     { CONSOLE.ERROR DEO }
-%>SCREEN.VECTOR     { SCREEN.VECTOR DEO2 }
-%>SCREEN.WIDTH      { SCREEN.WIDTH DEO2 }
-%>SCREEN.HEIGHT     { SCREEN.HEIGHT DEO2 }
-%>SCREEN.AUTO       { SCREEN.AUTO DEO }
-%>SCREEN.X          { SCREEN.X DEO2 }
-%>SCREEN.Y          { SCREEN.Y DEO2 }
-%>SCREEN.ADDR       { SCREEN.ADDR DEO2 }
-%>SCREEN.PIXEL      { SCREEN.PIXEL DEO }
-%>SCREEN.SPRITE     { SCREEN.SPRITE DEO }
-%>CONTROLLER.VECTOR { CONTROLLER.VECTOR DEO2 }
-%>MOUSE.VECTOR      { MOUSE.VECTOR DEO2 }
+( ---------------------------------------------------------------------------- )
+(                          D E V I C E   M A C R O S                           )
 
-%MOD      { DIVk MUL SUB }
-%MOD2     { DIV2k MUL2 SUB2 }
+( Device ports )
+%/SYSTEM.WST        { LIT 02 }      %r/SYSTEM.WST         { LITr 02 }
+%/SYSTEM.RST        { LIT 03 }      %r/SYSTEM.RST         { LITr 03 }
+%/SYSTEM.RED        { LIT 08 }      %r/SYSTEM.RED         { LITr 08 }
+%/SYSTEM.GREEN      { LIT 0a }      %r/SYSTEM.GREEN       { LITr 0a }
+%/SYSTEM.BLUE       { LIT 0c }      %r/SYSTEM.BLUE        { LITr 0c }
+%/SYSTEM.DEBUG      { LIT 0e }      %r/SYSTEM.DEBUG       { LITr 0e }
+%/SYSTEM.HALT       { LIT 0f }      %r/SYSTEM.HALT        { LITr 0f }
+%/CONSOLE.VECTOR    { LIT 10 }      %r/CONSOLE.VECTOR     { LITr 10 }
+%/CONSOLE.READ      { LIT 12 }      %r/CONSOLE.READ       { LITr 12 }
+%/CONSOLE.WRITE     { LIT 18 }      %r/CONSOLE.WRITE      { LITr 18 }
+%/CONSOLE.ERROR     { LIT 19 }      %r/CONSOLE.ERROR      { LITr 19 }
+%/SCREEN.VECTOR     { LIT 20 }      %r/SCREEN.VECTOR      { LITr 20 }
+%/SCREEN.WIDTH      { LIT 22 }      %r/SCREEN.WIDTH       { LITr 22 }
+%/SCREEN.HEIGHT     { LIT 24 }      %r/SCREEN.HEIGHT      { LITr 24 }
+%/SCREEN.AUTO       { LIT 26 }      %r/SCREEN.AUTO        { LITr 26 }
+%/SCREEN.X          { LIT 28 }      %r/SCREEN.X           { LITr 28 }
+%/SCREEN.Y          { LIT 2a }      %r/SCREEN.Y           { LITr 2a }
+%/SCREEN.ADDR       { LIT 2c }      %r/SCREEN.ADDR        { LITr 2c }
+%/SCREEN.PIXEL      { LIT 2e }      %r/SCREEN.PIXEL       { LITr 2e }
+%/SCREEN.SPRITE     { LIT 2f }      %r/SCREEN.SPRITE      { LITr 2f }
+%/CONTROLLER.VECTOR { LIT 80 }      %r/CONTROLLER.VECTOR  { LITr 80 }
+%/CONTROLLER.BUTTON { LIT 82 }      %r/CONTROLLER.BUTTON  { LITr 82 }
+%/CONTROLLER.KEY    { LIT 83 }      %r/CONTROLLER.KEY     { LITr 83 }
+%/MOUSE.VECTOR      { LIT 90 }      %r/MOUSE.VECTOR       { LITr 90 }
+%/MOUSE.X           { LIT 92 }      %r/MOUSE.X            { LITr 92 }
+%/MOUSE.Y           { LIT 94 }      %r/MOUSE.Y            { LITr 94 }
+%/MOUSE.STATE       { LIT 96 }      %r/MOUSE.STATE        { LITr 96 }
+%/MOUSE.SCROLLX     { LIT 9a }      %r/MOUSE.SCROLLX      { LITr 9a }
+%/MOUSE.SCROLLY     { LIT 9c }      %r/MOUSE.SCROLLY      { LITr 9c }
+
+( Read from device ports )
+%/SYSTEM.WST?        { /SYSTEM.WST DEI }          %r/SYSTEM.WST?        { r/SYSTEM.WST DEIr }
+%/SYSTEM.RST?        { /SYSTEM.RST DEI }          %r/SYSTEM.RST?        { r/SYSTEM.RST DEIr }
+%/CONSOLE.READ?      { /CONSOLE.READ DEI }        %r/CONSOLE.READ?      { r/CONSOLE.READ DEIr }
+%/SCREEN.WIDTH?      { /SCREEN.WIDTH DEI* }       %r/SCREEN.WIDTH?      { r/SCREEN.WIDTH DEIr* }
+%/SCREEN.HEIGHT?     { /SCREEN.HEIGHT DEI* }      %r/SCREEN.HEIGHT?     { r/SCREEN.HEIGHT DEIr* }
+%/SCREEN.AUTO?       { /SCREEN.AUTO DEI }         %r/SCREEN.AUTO?       { r/SCREEN.AUTO DEIr }
+%/SCREEN.X?          { /SCREEN.X DEI* }           %r/SCREEN.X?          { r/SCREEN.X DEIr* }
+%/SCREEN.Y?          { /SCREEN.Y DEI* }           %r/SCREEN.Y?          { r/SCREEN.Y DEIr* }
+%/SCREEN.ADDR?       { /SCREEN.ADDR DEI* }        %r/SCREEN.ADDR?       { r/SCREEN.ADDR DEIr* }
+%/CONTROLLER.BUTTON? { /CONTROLLER.BUTTON DEI }   %r/CONTROLLER.BUTTON? { r/CONTROLLER.BUTTON DEIr }
+%/CONTROLLER.KEY?    { /CONTROLLER.KEY DEI }      %r/CONTROLLER.KEY?    { r/CONTROLLER.KEY DEIr }
+%/MOUSE.X?           { /MOUSE.X DEI* }            %r/MOUSE.X?           { r/MOUSE.X DEIr* }
+%/MOUSE.Y?           { /MOUSE.Y DEI* }            %r/MOUSE.Y?           { r/MOUSE.Y DEIr* }
+%/MOUSE.STATE?       { /MOUSE.STATE DEI }         %r/MOUSE.STATE?       { r/MOUSE.STATE DEIr }
+%/MOUSE.SCROLLX?     { /MOUSE.SCROLLX DEI }       %r/MOUSE.SCROLLX?     { r/MOUSE.SCROLLX DEIr }
+%/MOUSE.SCROLLY?     { /MOUSE.SCROLLY DEI }       %r/MOUSE.SCROLLY?     { r/MOUSE.SCROLLY DEIr }
+
+( Write to device ports )
+%/SYSTEM.WST!        { /SYSTEM.WST DEO }           %r/SYSTEM.WST!        { r/SYSTEM.WST DEOr }
+%/SYSTEM.RST!        { /SYSTEM.RST DEO }           %r/SYSTEM.RST!        { r/SYSTEM.RST DEOr }
+%/SYSTEM.RED!        { /SYSTEM.RED DEO* }          %r/SYSTEM.RED!        { r/SYSTEM.RED DEOr* }
+%/SYSTEM.GREEN!      { /SYSTEM.GREEN DEO* }        %r/SYSTEM.GREEN!      { r/SYSTEM.GREEN DEOr* }
+%/SYSTEM.BLUE!       { /SYSTEM.BLUE DEO* }         %r/SYSTEM.BLUE!       { r/SYSTEM.BLUE DEOr* }
+%/SYSTEM.DEBUG!      { /SYSTEM.DEBUG DEO }         %r/SYSTEM.DEBUG!      { r/SYSTEM.DEBUG DEOr }
+%/SYSTEM.HALT!       { /SYSTEM.HALT DEO }          %r/SYSTEM.HALT!       { r/SYSTEM.HALT DEOr }
+%/CONSOLE.VECTOR!    { /CONSOLE.VECTOR DEO* }      %r/CONSOLE.VECTOR!    { r/CONSOLE.VECTOR DEOr* }
+%/CONSOLE.WRITE!     { /CONSOLE.WRITE DEO }        %r/CONSOLE.WRITE!     { r/CONSOLE.WRITE DEOr }
+%/CONSOLE.ERROR!     { /CONSOLE.ERROR DEO }        %r/CONSOLE.ERROR!     { r/CONSOLE.ERROR DEOr }
+%/SCREEN.VECTOR!     { /SCREEN.VECTOR DEO* }       %r/SCREEN.VECTOR!     { r/SCREEN.VECTOR DEOr* }
+%/SCREEN.WIDTH!      { /SCREEN.WIDTH DEO* }        %r/SCREEN.WIDTH!      { r/SCREEN.WIDTH DEOr* }
+%/SCREEN.HEIGHT!     { /SCREEN.HEIGHT DEO* }       %r/SCREEN.HEIGHT!     { r/SCREEN.HEIGHT DEOr* }
+%/SCREEN.AUTO!       { /SCREEN.AUTO DEO }          %r/SCREEN.AUTO!       { r/SCREEN.AUTO DEOr }
+%/SCREEN.X!          { /SCREEN.X DEO* }            %r/SCREEN.X!          { r/SCREEN.X DEOr* }
+%/SCREEN.Y!          { /SCREEN.Y DEO* }            %r/SCREEN.Y!          { r/SCREEN.Y DEOr* }
+%/SCREEN.ADDR!       { /SCREEN.ADDR DEO* }         %r/SCREEN.ADDR!       { r/SCREEN.ADDR DEOr* }
+%/SCREEN.PIXEL!      { /SCREEN.PIXEL DEO }         %r/SCREEN.PIXEL!      { r/SCREEN.PIXEL DEOr }
+%/SCREEN.SPRITE!     { /SCREEN.SPRITE DEO }        %r/SCREEN.SPRITE!     { r/SCREEN.SPRITE DEOr }
+%/CONTROLLER.VECTOR! { /CONTROLLER.VECTOR DEO* }   %r/CONTROLLER.VECTOR! { r/CONTROLLER.VECTOR DEOr* }
+%/MOUSE.VECTOR!      { /MOUSE.VECTOR DEO* }        %r/MOUSE.VECTOR!      { r/MOUSE.VECTOR DEOr* }
+
+
+
+( ---------------------------------------------------------------------------- )
+(                       C O N S T A N T S   M A C R O S                        )
+
+%BUTTON_MASK_UP     { #10 }     %BUTTON_MASK_A      { #01 }
+%BUTTON_MASK_DOWN   { #20 }     %BUTTON_MASK_B      { #02 }
+%BUTTON_MASK_LEFT   { #40 }     %BUTTON_MASK_SELECT { #04 }
+%BUTTON_MASK_RIGHT  { #80 }     %BUTTON_MASK_START  { #08 }
+
+%MOUSE_MASK_1       { #01 }     %MOUSE_MASK_5       { #10 }
+%MOUSE_MASK_2       { #02 }     %MOUSE_MASK_6       { #20 }
+%MOUSE_MASK_3       { #04 }     %MOUSE_MASK_7       { #40 }
+%MOUSE_MASK_4       { #08 }     %MOUSE_MASK_8       { #80 }
+
+
+( Colour mappings for pixel colours, 1-bit sprite colours, and 2-bit sprite colours. )
+%COL_0 { #00 }     %COL_00 { #00 }     %COL_0012 { #00 }
+%COL_1 { #01 }     %COL_01 { #01 }     %COL_0123 { #01 }
+%COL_2 { #02 }     %COL_02 { #02 }     %COL_0231 { #02 }
+%COL_3 { #03 }     %COL_03 { #03 }     %COL_0312 { #03 }
+                   %COL_10 { #04 }     %COL_1012 { #04 }
+                   %COL_T1 { #05 }     %COL_T123 { #05 }
+                   %COL_12 { #06 }     %COL_1231 { #06 }
+                   %COL_13 { #07 }     %COL_1312 { #07 }
+                   %COL_20 { #08 }     %COL_2012 { #08 }
+                   %COL_21 { #09 }     %COL_2123 { #09 }
+                   %COL_T2 { #0a }     %COL_T231 { #0a }
+                   %COL_23 { #0b }     %COL_2312 { #0b }
+                   %COL_30 { #0c }     %COL_3012 { #0c }
+                   %COL_31 { #0d }     %COL_3123 { #0d }
+                   %COL_32 { #0e }     %COL_3231 { #0e }
+                   %COL_T3 { #0f }     %COL_T312 { #0f }
+
+
+
+( ---------------------------------------------------------------------------- )
+(                     I N S T R U C T I O N   M A C R O S                      )
+
+%MOD      { DIVk   MUL   SUB }                           ( val mod -- remainder )
+%MODr     { DIVkr  MULr  SUBr }                          ( val mod -- remainder )
+%MOD*     { DIVk*  MUL*  SUB* }                          ( val* mod* -- remainder* )
+%MODr*    { DIVkr* MULr* SUBr* }                         ( val* mod* -- remainder* )
+
+%MOD2     {   #01 AND  }
+%MOD2*    { #0001 AND* }
+%MOD4     {   #03 AND  }
+%MOD4*    { #0003 AND* }
+%MOD8     {   #07 AND  }
+%MOD8*    { #0007 AND* }
+
+
+%DIVMOD   { DIVk MULk STH ROT STHr SUB ROT POP }         ( val mod -- quotient remainder )
+%DIVMOD*  { DIVk* MULk* STH* ROT* STHr* SUB* ROT* POP* } ( val* mod* -- quotient* remainder* )
+
+%GTH0  { }
+%GTH0* { ADD }
+%ADD2* { INC* INC* }
+
+%DOUBLE   { DUP ADD  }
+%DOUBLE*  { DUP* ADD* }
+%MUL4     { #20 SFT  }
+%MUL4*    { #20 SFT* }
+%MUL8     { #30 SFT  }
+%MUL8*    { #30 SFT* }
+%HALVE    { #01 SFT  }
+%HALVE*   { #01 SFT* }
+%DIV4     { #02 SFT  }
+%DIV4*    { #02 SFT* }
+%DIV8     { #03 SFT  }
+%DIV8*    { #03 SFT* }
+
+%SHL1     { #10 SFT  }     %SHR1     { #01 SFT  }
+%SHL2     { #20 SFT  }     %SHR2     { #02 SFT  }
+%SHL3     { #30 SFT  }     %SHR3     { #03 SFT  }
+%SHL4     { #40 SFT  }     %SHR4     { #04 SFT  }
+%SHL5     { #50 SFT  }     %SHR5     { #05 SFT  }
+%SHL6     { #60 SFT  }     %SHR6     { #06 SFT  }
+%SHL7     { #70 SFT  }     %SHR7     { #07 SFT  }
+%SHL8     { #80 SFT  }     %SHR8     { #08 SFT  }
+%SHL1*    { #10 SFT* }     %SHR1*    { #01 SFT* }
+%SHL2*    { #20 SFT* }     %SHR2*    { #02 SFT* }
+%SHL3*    { #30 SFT* }     %SHR3*    { #03 SFT* }
+%SHL4*    { #40 SFT* }     %SHR4*    { #04 SFT* }
+%SHL5*    { #50 SFT* }     %SHR5*    { #05 SFT* }
+%SHL6*    { #60 SFT* }     %SHR6*    { #06 SFT* }
+%SHL7*    { #70 SFT* }     %SHR7*    { #07 SFT* }
+%SHL8*    { #80 SFT* }     %SHR8*    { #08 SFT* }
+
+%FLOOR8     {   #07 EOR  }
+%FLOOR8*    { #0007 EOR* }
+%CEIL8      {   #07 ADD  FLOOR8  }
+%CEIL8*     { #0007 ADD* FLOOR8* }
+%CEIL8DIV8  {   #07 ADD  DIV8  }
+%CEIL8DIV8* { #0007 ADD* DIV8* }
+
 %DEC      { #01 SUB }
-%DEC2     { #0001 SUB2 }
-%CALL     { JSR2 }
-%GOTO     { JMP2 }
-%RETURN   { JMP2r }
-%HALF2    { #01 SFT2 }
-%DOUBLE   { #10 SFT }
-%DOUBLE2  { #10 SFT2 }
-%ISNEG2   { #7fff GTH2 }
-%ISPOS2   { #8000 LTH2 }
-%NOT      { #00 EQU }
-%NEG2     { #0000 SWP2 SUB2 }
-%ABS2     { DUP2 ISPOS2 #05 JCN NEG2 }
-%NULL     { 00 }
-%SPACE    { 20 }
+%DECr     { LITr 01 SUBr }
+%DECk     { DUP #01 SUB }
+%DECkr    { DUPr LITr 01 SUBr }
+%DEC*     { #0001 SUB* }
+%DECr*    { LITr* 0001 SUBr* }
+%DECk*    { DUP* #0001 SUB* }
+%DECkr*   { DUPr* LITr* 0001 SUBr* }
 
-%INC_X    { !SCREEN.X INC2 >SCREEN.X }
-%INC_Y    { !SCREEN.Y INC2 >SCREEN.Y }
-%DEC_X    { !SCREEN.X DEC2 >SCREEN.X }
-%DEC_Y    { !SCREEN.Y DEC2 >SCREEN.Y }
-%ADD_X    { !SCREEN.X ADD2 >SCREEN.X }
-%ADD_Y    { !SCREEN.Y ADD2 >SCREEN.Y }
-%SUB_X    { !SCREEN.X SWP2 SUB2 >SCREEN.X }
-%SUB_Y    { !SCREEN.Y SWP2 SUB2 >SCREEN.Y }
+%CALL     { JSR* }
+%GOTO     { JMP* }
+%RETURN   { JMPr* }
+%NORETURN { POPr* } ( for removing a return address from the return stack )
+%CALL_RET { GOTO }
 
-%BREAK_IF_NOT  { #01 JCN BRK }
-%BREAKPOINT  { #0101 SYSTEM.DEBUG DEO2 }
-%DEBUG { #00 ;fill_screen CALL BREAKPOINT }
-%HALT  { #01 SYSTEM.HALT DEO }
+( If greater than 0, call the address. If not, skip the call and pop the address. )
+( bool addr* -- )
+%CALL_IF  { OVR NOT DOUBLE JMP CALL DUPk POP* POP  }
 
-%!IS_UP_PRESSED     { !button_pressed #10 AND }
-%!IS_DOWN_PRESSED   { !button_pressed #20 AND }
-%!IS_LEFT_PRESSED   { !button_pressed #40 AND }
-%!IS_RIGHT_PRESSED  { !button_pressed #80 AND }
-%!IS_A_PRESSED      { !button_pressed #01 AND }
-%!IS_B_PRESSED      { !button_pressed #02 AND }
-%!IS_SELECT_PRESSED { !button_pressed #04 AND }
-%!IS_START_PRESSED  { !button_pressed #08 AND }
+%IS_POSITIVE      { #80 LTH }
+%IS_POSITIVE*     { #8000 LTH* }
+%IS_NEGATIVE      { #7f GTH }
+%IS_NEGATIVE*     { #7fff GTH* }
+%NEGATE           { #00 SWP SUB }
+%NEGATE*          { #0000 SWP* SUB* }
+%ABS*             { DUP* IS_POS* #05 JCN NEG* }
 
-( ------------------------------------------------------------------------------- )
-(                         G L O B A L   V A R I A B L E S                         )
+%TO_SHORT         { #00 SWP }
+%DIGIT_TO_ASCII   { #30 ADD }
+%CODE_TO_ASCII    { #20 ADD }
+%ASCII_TO_CODE    { #20 SUB }
 
-%>center_x  { #00 STZ2 }
-%!center_x  { #00 LDZ2 }
-%>center_y  { #02 STZ2 }
-%!center_y  { #02 LDZ2 }
+( Convert between pixel colours [0,1,2,3] and sprite foreground colours [0,4,8,c] )
+%TO_SPRITE_COLOUR { SHL2 }
+%TO_PIXEL_COLOUR  { SHR2 }
 
-%>cursor_x  { #04 STZ2 }
-%!cursor_x  { #04 LDZ2 }
-%>cursor_y  { #06 STZ2 }
-%!cursor_y  { #06 LDZ2 }
+%<NULL>        { 00 }
+%<SPACE>       { 20 }
+%<LINEFEED>    { 0a }
+%CHOOSE        { ROT JMP SWP NIP } ( flag value0 value1 -- value )
+%CHOOSE*       { STH* ROT STHr* ROT JMP SWP* NIP* } ( flag value0* value1* -- value* )
+%MASK          { SWP  OVR  AND  EQU  }  ( val  mask  -- bool )
+%MASK*         { SWP* OVR* AND* EQU* }  ( val* mask* -- bool )
 
-%>canvas_x  { #08 STZ2 }
-%!canvas_x  { #08 LDZ2 }
-%>canvas_y  { #0a STZ2 }
-%!canvas_y  { #0a LDZ2 }
+%MOVE_LEFT     { /SCREEN.X? SWP* SUB* /SCREEN.X! }
+%MOVE_RIGHT    { /SCREEN.X? ADD* /SCREEN.X! }
+%MOVE_UP       { /SCREEN.Y? SWP* SUB* /SCREEN.Y! }
+%MOVE_DOWN     { /SCREEN.Y? ADD* /SCREEN.Y! }
 
-%>canvas_width  { #0c STZ2 }
-%!canvas_width  { #0c LDZ2 }
-%>canvas_height { #0e STZ2 }
-%!canvas_height { #0e LDZ2 }
+%MOVE_LEFT_1   { /SCREEN.X? DEC* /SCREEN.X! }
+%MOVE_RIGHT_1  { /SCREEN.X? INC* /SCREEN.X! }
+%MOVE_UP_1     { /SCREEN.Y? DEC* /SCREEN.Y! }
+%MOVE_DOWN_1   { /SCREEN.Y? INC* /SCREEN.Y! }
 
-%>button_pressed  { #10 STZ }
-%!button_pressed  { #10 LDZ }
-%>button_released { #11 STZ }
-%!button_released { #11 LDZ }
-%>button_held     { #12 STZ }
-%!button_held     { #12 LDZ }
+%BREAKPOINT    { #0101 /SYSTEM.DEBUG DEO* BRK }
+%DEBUG         { #01 /SYSTEM.DEBUG! }
+%HALT          { #01 /SYSTEM.HALT! BRK }
+%PANIC         { BREAKPOINT }
 
-%>active_control { #13 STZ }
-%!active_control { #13 LDZ }
+%IF_FALSE      { JMP         }    ( value  -- )
+%IF_FALSE*     { NIP JMP     }    ( value* -- )
+%IF_FALSEY     { #01 JCN     }    ( value  -- )
+%IF_FALSEY*    { ORA #01 JCN }    ( value* -- )
 
-( ------------------------------------------------------------------------------- )
-(                             M A I N   P R O G R A M                             )
+%IF_TRUE       { IF_TRUTHY   }
+%IF_TRUE*      { IF_TRUTHY*  }
+
+%IF_TRUTHY     { NOT  JMP }        ( value -- )
+%IF_TRUTHY*    { NOT* JMP }        ( value -- )
+%IF_EQUAL      { NEQ  JMP }        ( value1  value2  -- )
+%IF_EQUAL*     { NEQ* JMP }        ( value1* value2* -- )
+%IF_NOT_EQUAL  { EQU  JMP }        ( value1  value2  -- )
+%IF_NOT_EQUAL* { EQU* JMP }        ( value1* value2* -- )
+%IF_MASK       { AND  IF_TRUTHY  }  ( value1  value2  -- )
+%IF_MASK*      { AND* IF_TRUTHY* }  ( value1  value2  -- )
+%IF_NOT_MASK   { AND  IF_FALSEY  }  ( value1  value2  -- )
+%IF_NOT_MASK*  { AND* IF_FALSEY* }  ( value1  value2  -- )
+%TO_BOOL       { #00 GTH }
+%TO_BOOL*      { ORA TO_BOOL }
+%NOT           { #00 EQU }
+%NOT*          { ORA NOT }
+
+%INC_Z   { LDZk  INC  SWP STZ }
+%DEC_Z   { LDZk  DEC  SWP STZ }
+%INC_Z*  { LDZk* INC* ROT STZ* }
+%DEC_Z*  { LDZk* DEC* ROT STZ* }
+
+%INC_A   { LDAk  INC  ROT  ROT STA }
+%DEC_A   { LDAk  DEC  ROT  ROT STA }
+%INC_A*  { LDAk* INC* SWP* STA* }
+%DEC_A*  { LDAk* DEC* SWP* STA* }
+
+%INC_R   { PANIC }  ( Not possible to implement for relative addresses )
+%DEC_R   { PANIC }  ( Not possible to implement for relative addresses )
+%INC_R*  { PANIC }  ( Not possible to implement for relative addresses )
+%DEC_R*  { PANIC }  ( Not possible to implement for relative addresses )
+
+
+%AND_FLIPX { #10 ORA }
+%AND_FLIPY { #20 ORA }
+%AND_FG    { #40 ORA }
+%AND_2BIT  { #80 ORA }
+
+
+
+( ---------------------------------------------------------------------------- )
+(                       G L O B A L   V A R I A B L E S                        )
+
+( Canvas origin in screen-space coords )
+%/V.CANVAS.X        { #08 }     %/V.CANVAS.X?        { #08 LDZ* }     %/V.CANVAS.X!        { #08 STZ* }
+%/V.CANVAS.Y        { #0a }     %/V.CANVAS.Y?        { #0a LDZ* }     %/V.CANVAS.Y!        { #0a STZ* }
+( Canvas size )
+%/V.CANVAS.WIDTH    { #0c }     %/V.CANVAS.WIDTH?    { #0c LDZ* }     %/V.CANVAS.WIDTH!    { #0c STZ* }
+%/V.CANVAS.HEIGHT   { #0e }     %/V.CANVAS.HEIGHT?   { #0e LDZ* }     %/V.CANVAS.HEIGHT!   { #0e STZ* }
+( Canvas colour mode: 0=1-bit, 1=2-bit )
+%/V.CANVAS.MODE     { #16 }     %/V.CANVAS.MODE?     { #16 LDZ }      %/V.CANVAS.MODE!     { #16 STZ }
+( The currently active drawing tool. 0=Pan )
+%/V.ACTIVE_TOOL     { #17 }     %/V.ACTIVE_TOOL?     { #17 LDZ }      %/V.ACTIVE_TOOL!     { #17 STZ }
+
+
+
+%PRINTF(\s)     { ;print_space CALL }
+%PRINTF(\n)     { ;print_newline CALL }
+%PRINTF(%s)     { ;print_string CALL }
+%PRINTF(%s\s)   { PRINTF(%s) PRINTF(\s) }
+%PRINTF(%s\n)   { PRINTF(%s) PRINTF(\n) }
+%PRINTF(%d)     { ;print_byte_decimal CALL }
+%PRINTF(%d\s)   { PRINTF(%d) PRINTF(\s) }
+%PRINTF(%d\n)   { PRINTF(%d) PRINTF(\n) }
+%PRINTF(%d*)    { ;print_short_decimal CALL }
+%PRINTF(%d*\s)  { PRINTF(%d*) PRINTF(\s) }
+%PRINTF(%d*\n)  { PRINTF(%d*) PRINTF(\n) }
+%PRINTF(%-d*)   { ;print_short_decimal_signed CALL }
+%PRINTF(%-d*\s) { PRINTF(%-d*) PRINTF(\s) }
+%PRINTF(%-d*\n) { PRINTF(%-d*) PRINTF(\n) }
+%PRINTF(%b)     { ;print_byte_binary CALL }
+%PRINTF(%b\s)   { PRINTF(%b) PRINTF(\s) }
+%PRINTF(%b\n)   { PRINTF(%b) PRINTF(\n) }
+%PRINTF(%?)     { ;print_bool CALL }
+%PRINTF(%?\s)   { PRINTF(%?) PRINTF(\s) }
+%PRINTF(%?\n)   { PRINTF(%?) PRINTF(\n) }
+%PRINTF(%?*)    { ;print_bool_short CALL }
+%PRINTF(%?*\s)  { PRINTF(%?) PRINTF(\s) }
+%PRINTF(%?*\n)  { PRINTF(%?) PRINTF(\n) }
+
+
+
+( ---------------------------------------------------------------------------- )
+(                          P R O G R A M   S T A R T                           )
 
 |0100
-@program_start
-  !SCREEN.WIDTH HALF2 >center_x
-  !SCREEN.HEIGHT HALF2 >center_y
-  ;colour_scheme_1 ;load_colours CALL
-  ;on_mouse >MOUSE.VECTOR
-  ;on_screen >SCREEN.VECTOR
+@program_start ( -- )
+
+(  #0008 /V.CANVAS.WIDTH!
+  #0008 /V.CANVAS.HEIGHT!
+  COL_1 #0001 #0002
+  ;fill_canvas_from_point CALL
+  HALT
+)
+
+ ( Initialise variables )
+  #0080 /V.CANVAS.WIDTH!
+  #0060 /V.CANVAS.HEIGHT!
+  ;colour_palette_ui #04 ;ui__set_colour_palette CALL
+
   ;launch_screen GOTO
+  ;canvas_screen GOTO
 
 
-@launch_screen ( -- )
-  ;inputs__clear_callbacks CALL
-  ;draw_menu_background CALL
-  !center_x #001c SUB2 >SCREEN.X
-  !center_y #0018 SUB2 >SCREEN.Y
-  #04 ;&title ;draw_text CALL
- ( Callback registration )
-  #00 ;launch_screen__draw__create_image
-  #01 ;launch_screen__draw__load_image
-  #02 ;inputs__register_draw_callbacks CALL
-  #00 ;launch_screen__A__create_image
-  #01 ;launch_screen__A__load_image
-  #02 ;inputs__register_A_callbacks CALL
-  #00 #02 ;inputs__setup GOTO
-  &title "TUNGSTEN NULL
-@launch_screen__draw__create_image        ( is_active )
-  !center_x #0032 SUB2 >SCREEN.X            ( is_active )
-  !center_y #0008 ADD2 >SCREEN.Y            ( is_active )
-  #08 #0c ;choose CALL                      ( colour )
-  #0064 ;&label ;draw_button CALL RETURN    ( -- )
-  &label "Create SPACE "image NULL
-@launch_screen__draw__load_image          ( is_active )
-  !center_x #0032 SUB2 >SCREEN.X            ( is_active )
-  !center_y #0014 ADD2 >SCREEN.Y            ( is_active )
-  #08 #0c ;choose CALL                      ( colour )
-  #0064 ;&label ;draw_button CALL RETURN    ( -- )
-  &label "Load SPACE "image NULL
-@launch_screen__A__create_image
-  ;create_image_screen GOTO
-@launch_screen__A__load_image
-  ;load_image_screen GOTO
+( ---------------------------------------------------------------------------- )
+(                       C A N V A S   P R O C E D U R E S                      )
+
+( ALL OF THESE ROUTINES USE CANVAS-SPACE COORDINATES )
+
+( Get the colour of the canvas pixel at the given coordinates. )
+@get_canvas_pixel_colour                  ( x* y*  -- colour )
+  ;get_mask_and_address CALL LDA AND TO_BOOL RETURN
+@set_canvas_pixel_colour                  ( colour x* y* -- )
+  ;get_mask_and_address CALL STHk* LDA ROT ,&col_1 JCN ( mask byte | row_addr* )
+  &col_0 EOR ,&end JMP
+  &col_1 ORA
+  &end STHr* STA RETURN
+
+@check_in_canvas_bounds                   ( x* y*  -- in_bounds? )
+  /V.CANVAS.HEIGHT? LTH* STH /V.CANVAS.WIDTH? LTH* STHr AND RETURN
+
+( Return 1 if pixel is in-bounds and the given colour, otherwise return 0 )
+@check_canvas_pixel_colour                ( colour x* y*  -- is_colour? )
+  OVR* OVR* ;check_in_canvas_bounds CALL ,&cont JCN
+  ( bail out ) POP* POP* POP #00 RETURN
+  &cont ;get_canvas_pixel_colour CALL EQU RETURN
+
+( Note: These routines all use canvas-space coordinates )
+@get_mask_and_address                     ( x* y* -- mask row_address* )
+  OVR* OVR* ;get_sprite_address CALL        ( x* y* sprite_addr* )
+  SWP* MOD8* ADD*                           ( x* row_addr* )
+  STH* ;get_mask CALL STHr* RETURN
+@get_sprite_address                       ( x* y* -- sprite_address* )
+  SWP* DIV8* SWP* DIV8*                     ( spritex* spritey* )
+  /V.CANVAS.WIDTH? CEIL8DIV8*               ( sprite_x* sprite_y* sprite_width* )
+  MUL* ADD* MUL8* ;canvas_buffer ADD*       ( sprite_addr* )
+  RETURN
+@get_mask  ( x* -- mask )
+  NIP MOD8 #0107 ROT SUB SHL4 SFT RETURN
 
 
-@create_image_screen ( -- )
-  ;inputs__clear_callbacks CALL
-  ;draw_menu_background CALL
- ( "Create image" title )
-  !center_x #0023 SUB2 >SCREEN.X
-  !center_y #002a SUB2 >SCREEN.Y
-  #04 ;&title ;draw_text CALL
- ( Width/height labels )
-  !center_x #0032 SUB2 >SCREEN.X
-  !center_y #0006 SUB2 >SCREEN.Y
-  #04 ;&width_label ;draw_text CALL
-  #000c ADD_Y
-  #04 ;&height_label ;draw_text CALL
- ( Register draw callbacks )
-  #00 ;create_image_screen__draw__back
-  #01 ;create_image_screen__draw__colour_mode
-  #02 ;create_image_screen__draw__width
-  #03 ;create_image_screen__draw__height
-  #04 ;create_image_screen__draw__confirm
-  #05 ;inputs__register_draw_callbacks CALL
- ( Register A callbacks )
-  #00 ;create_image_screen__A__back
-  #04 ;create_image_screen__A__confirm
-  #02 ;inputs__register_A_callbacks CALL
- ( Register left callbacks )
-  #01 ;create_image_screen__left__colour_mode
-  #02 ;create_image_screen__left__width
-  #03 ;create_image_screen__left__height
-  #03 ;inputs__register_left_callbacks CALL
- ( Register right callbacks )
-  #01 ;create_image_screen__right__colour_mode
-  #02 ;create_image_screen__right__width
-  #03 ;create_image_screen__right__height
-  #03 ;inputs__register_right_callbacks CALL
+@fill_canvas_from_point                   ( colour x* y* )
+ ( Store starting values )
+  STH* ROT ;&col_p STA                      ( x* | y* )
+  DUP* ;&paint_x STA*                       ( x* | y* )
+  STHr* DUP* ;&paint_y STA*                 ( x* y* )
+ ( Return if coords not in bounds )
+  ;check_in_canvas_bounds CALL              ( in_bounds? )
+  IF_FALSE RETURN                           ( -- )
+ ( Find target colour )
+  ;&paint_x LDA* ;&paint_y LDA*             ( x* y* )
+  ;get_canvas_pixel_colour CALL             ( target_colour )
+  DUP ;&col_t STA                           ( target_colour )
+ ( Return if target and paint colours are the same )
+  ;&col_p LDA IF_EQUAL RETURN               ( -- )
 
-  #01 #05 ;inputs__setup GOTO
-  &title "CREATE SPACE "IMAGE NULL
-  &width_label "Width: NULL
-  &height_label "Height: NULL
+ ( Clear variables )
+  #0000 OVRk ;&mark1_a STA ;&mark2_a STA
+  ;&backtrack STA ;&findloop STA ;&paint_d STA
+ ( Move the painter to a wall to start )
+  &move_into_place                        ( -- )
+    ;&front? CALL NOT ,&START JCN
+    ;&move_forward CALL ,&move_into_place JMP
+  &MAIN_LOOP
+    ;&move_forward CALL
+    ( if right-pixel is inside, then )
+    ;&right? CALL NOT ,&START JCN
+      ( if backtrack is true and findloop is false and either front-pixel or left-pixel is inside, then )
+      ;&backtrack LDA ;&findloop LDA NOT AND ;&front? CALL ;&left? CALL ORA AND NOT ,&no_findloop JCN
+        #01 ;&findloop STA
+    &no_findloop
+      ;&turn_right CALL
+  &PAINT
+    ;&move_forward CALL
+  &START
+    ;&update_neighbour_wall_count CALL
+    ;&wall_count LDA #04 EQU ,&check_1 JCN
+   ( Orient the painter to face right along a wall )
+    &orient_right
+      ;&front? CALL NOT ,&orient_left JCN
+      ;&turn_right CALL ,&orient_right JMP
+    &orient_left
+      ;&front? CALL ,&check_1 JCN
+      ;&turn_left CALL ,&orient_left JMP
+  &check_1
+    ;&wall_count LDA #01 NEQ ,&check_2 JCN
+   ( If backtrack is True, findloop = True )
+    &1_1 ;&backtrack LDA NOT ,&1_2 JCN
+      #01 ;&findloop STA ;&MAIN_LOOP GOTO
+   ( Else if findloop is True, make mark1 active )
+    &1_2 ;&findloop LDA NOT ,&1_3 JCN
+      #01 ;&mark1_a STA ;&MAIN_LOOP GOTO
+   ( Else if front-left and back-left are both inside )
+    &1_3 ;&front_left? CALL ;&back_left? CALL AND NOT ;&MAIN_LOOP JCN*
+      #00 ;&mark1_a STA
+      ;&paint_here CALL
+      ;&PAINT GOTO
+  &check_2
+    ;&wall_count LDA #02 NEQ ;&check_3 JCN*
+   ( If back is not inside )
+    &2_1 ;&back? CALL ,&2_2 JCN
+     ( If front-left is inside )
+      ;&front_left? CALL NOT ;&MAIN_LOOP JCN*
+      #00 ;&mark1_a STA
+      ;&paint_here CALL
+      ;&PAINT GOTO
+   ( If mark1 is not active )
+    &2_2 ;&mark1_a LDA ,&2_3 JCN
+      ;&paint_x LDA* ;&mark1_x STA*
+      ;&paint_y LDA* ;&mark1_y STA*
+      ;&paint_d LDA  ;&mark1_d STA
+      #0001 ;&mark1_a   STA ;&mark2_a  STA
+      #0000 ;&backtrack STA ;&findloop STA
+      ;&MAIN_LOOP GOTO
+   ( Else if mark2 is not active )
+    &2_3 ;&mark2_a LDA ;&2_4 JCN*
+     ( If painter is at mark1 )
+      &2_3_1 ;&mark1_a LDA NOT ,&2_3_2 JCN
+      ;&paint_x LDA* ;&mark1_x LDA* NEQ* ,&2_3_2 JCN
+      ;&paint_y LDA* ;&mark1_y LDA* NEQ* ,&2_3_2 JCN
+       ( If painter and mark1 are facing in the same direction )
+        &2_3_1_1 ;&paint_d LDA ;&mark1_d LDA NEQ ,&2_3_1_else
+          #00 ;&mark1_a STA
+          ;&turn_around CALL
+          ;&paint_here CALL
+          ;&PAINT GOTO
+        &2_3_1_else
+          #0001 ;&backtrack STA ;&findloop STA
+          ;&mark1_d LDA ;&paint_d STA
+          ;&MAIN_LOOP GOTO
+     ( If findloop is True )
+      &2_3_2 ;&findloop LDA NOT ,&2_3_end JCN
+        ;&paint_x LDA* ;&mark2_x STA*
+        ;&paint_y LDA* ;&mark2_y STA*
+        ;&paint_d LDA  ;&mark2_d STA
+        #01 ;&mark2_a STA
+      &2_3_end ;&MAIN_LOOP GOTO
+   ( Else if painter is at mark1 )
+    &2_4 ;&mark1_a LDA NOT ,&2_5 JCN
+    ;&paint_x LDA* ;&mark1_x LDA* NEQ* ,&2_5 JCN
+    ;&paint_y LDA* ;&mark1_y LDA* NEQ* ,&2_5 JCN
+      ;&mark2_x LDA* ;&paint_x STA*
+      ;&mark2_y LDA* ;&paint_y STA*
+      ;&mark2_d LDA  ;&paint_d STA
+      #0000 ;&mark1_a STA ;&mark2_a STA
+      #00 ;&backtrack STA
+      ;&turn_around CALL
+      ;&paint_here CALL
+      ;&PAINT GOTO
+   ( Else if painter is at mark2 )
+    &2_5 ;&mark2_a LDA NOT ,&2_end JCN
+    ;&paint_x LDA* ;&mark2_x LDA* NEQ* ,&2_end JCN
+    ;&paint_y LDA* ;&mark2_y LDA* NEQ* ,&2_end JCN
+      ;&paint_x LDA* ;&mark1_x STA*
+      ;&paint_y LDA* ;&mark1_y STA*
+      ;&mark2_d LDA  ;&mark1_d STA
+      ;&mark2_d LDA  ;&paint_d STA
+      #0001 ;&mark1_a STA ;&mark2_a STA
+    &2_end ;&MAIN_LOOP GOTO
+  &check_3
+    ;&wall_count LDA #03 NEQ ,&check_4 JCN
+    #00 ;&mark1_a STA
+    ;&paint_here CALL
+    ;&PAINT GOTO
+  &check_4
+    ;&wall_count LDA #04 NEQ ;&MAIN_LOOP JCN*
+    ;&paint_here CALL_RET
 
-@create_image_screen__draw__back
-  !center_x #003c SUB2 >SCREEN.X
-  !center_y #002c SUB2 >SCREEN.Y
-  #08 #0c ;choose CALL
-  ;&sprite ;draw_icon_button CALL RETURN
-  &sprite 1830 60ff ff60 3018
-@create_image_screen__draw__colour_mode
-  !center_x #0032 SUB2 >SCREEN.X
-  !center_y #0018 SUB2 >SCREEN.Y
-  #08 #0c ;choose CALL #02 SWP
-  #0064 ;&1_bit ;&2_bit
-  ;create_image_screen__vars/colour_mode LDA
-  ;draw_toggle CALL RETURN
-  &1_bit "1-bit NULL
-  &2_bit "2-bit NULL
-@create_image_screen__draw__width
-  !center_x #0003 ADD2 >SCREEN.X
-  !center_y #0008 SUB2 >SCREEN.Y
-  DUP ,&is_active STR
-  #08 #0c ;choose CALL
-  #002f ;create_image_screen__vars/width LDA2
-  LIT &is_active $1 ;draw_numeric_input CALL RETURN
-@create_image_screen__draw__height
-  !center_x #0003 ADD2 >SCREEN.X
-  !center_y #0004 ADD2 >SCREEN.Y
-  DUP ,&is_active STR
-  #08 #0c ;choose CALL
-  #002f ;create_image_screen__vars/height LDA2
-  LIT &is_active $1 ;draw_numeric_input CALL RETURN
-@create_image_screen__draw__confirm
-  !center_x #0032 SUB2 >SCREEN.X
-  !center_y #001b ADD2 >SCREEN.Y
-  #02 #03 ;choose CALL
-  #0064 ;&confirm ;draw_button CALL RETURN
-  &confirm "CONFIRM NULL
-@create_image_screen__A__back
-  ;launch_screen GOTO
-@create_image_screen__A__confirm
-  DEBUG
-@create_image_screen__left__colour_mode
-  #00 ;create_image_screen__vars/colour_mode STA RETURN
-@create_image_screen__left__width
-  ;create_image_screen__vars/width ;decrement_value_at_addr CALL RETURN
-@create_image_screen__left__height
-  ;create_image_screen__vars/height ;decrement_value_at_addr CALL RETURN
-@create_image_screen__right__colour_mode
-  #01 ;create_image_screen__vars/colour_mode STA RETURN
-@create_image_screen__right__width
-  ;create_image_screen__vars/width ;increment_value_at_addr CALL RETURN
-@create_image_screen__right__height
-  ;create_image_screen__vars/height ;increment_value_at_addr CALL RETURN
+  ( Update the variable tracking the number of walls around the painter )
+  &update_neighbour_wall_count                       ( -- wall_count )
+    #04 ,&front? JSR ,&back? JSR ,&left? JSR ,&right? JSR
+    ADD* ADD SUB ;&wall_count STA RETURN
 
-@create_image_screen__vars
-  &colour_mode 00
-  &width 0140
-  &height 00f0
+ ( Return 1 if the pixel in the direction is inside the fill region, otherwise 0 )
+  &front?       #00 ,&dir_inside? JMP
+  &back?        #02 ,&dir_inside? JMP
+  &left?        #03 ,&dir_inside? JMP
+  &right?       #01 ,&dir_inside? JMP
+  &front_left?  #03 ,&diag_inside? JMP
+  &back_left?   #02 ,&diag_inside? JMP
+  &dir_inside?  ;&col_t LDA SWP ,&get_dir_coords  JSR ;check_canvas_pixel_colour CALL_RET
+  &diag_inside? ;&col_t LDA SWP ,&get_diag_coords JSR ;check_canvas_pixel_colour CALL_RET
+ ( 0:front  1:right  2:back  3:left )
+  &get_dir_coords                         ( relative_d -- x* y* )
+    ;&paint_d LDA ADD MOD4                  ( d )
+    TO_SHORT DUP* INC MOD4 SWP*             ( d+1* d* )
+    DOUBLE* ;&_dir_offsets ADD* LDA* SWP*   ( d+1* | y_offset* )
+    DOUBLE* ;&_dir_offsets ADD* LDA* SWP*   ( x_offset* | y_offset* )
+    ,&to_abs_coords JMP
+ ( 0:front-right  1:back-right  2:back-left  3:back-left )
+  &get_diag_coords                        ( relative_d -- x* y* )
+    ;&paint_d LDA ADD MOD4                  ( d )
+    #0003 ROT SUB INCk* MOD4                ( 3-d* 4-d* )
+    DOUBLE* ;&_diag_offsets ADD* LDA* SWP*  ( y_offset* 3-d* )
+    DOUBLE* ;&_diag_offsets ADD* LDA* SWP*  ( x_offset* y_offset* )
+    ,&to_abs_coords JMP
+  &to_abs_coords                          ( x_offset* y_offset* -- x* y* )
+    SWP* ;&paint_x LDA* ADD* SWP*           ( x* y_offset* )
+    ;&paint_y LDA* ADD* RETURN              ( x* y* )
+  &_dir_offsets  ffff 0000 0001 0000
+  &_diag_offsets ffff ffff 0001 0001
+
+  &paint_here   ,&col_p LDR ,&paint_x LDR* ,&paint_y LDR* ;set_canvas_pixel_colour CALL_RET
+  &move_forward #00 ;&get_dir_coords CALL ,&paint_y STR* ,&paint_x STR* RETURN
+  &turn_left    #ff ,&_turn JMP
+  &turn_right   #01 ,&_turn JMP
+  &turn_around  #02 ,&_turn JMP
+  &_turn        ,&paint_d LDR ADD MOD4 ,&paint_d STR RETURN
+
+  &paint_x    $2  &mark1_x  $2  &mark2_x $2  ( x-coords )
+  &paint_y    $2  &mark1_y  $2  &mark2_y $2  ( y-coords )
+  &paint_d    $2  &mark1_d  $1  &mark2_d $1  ( directions, 0:up 1:right 2:down 3:left )
+  &wall_count $1  &mark1_a  $1  &mark2_a $1  ( neighbouring walls count, and mark active bools )
+  &col_p      $1  &col_t    $1                 ( paint colour and target colour )
+  &backtrack  $1  &findloop $1
 
 
+( ---------------------------------------------------------------------------- )
+(                                T O O L B O X                                 )
+
+@delay    ( coarse* -- )
+  #0000 SWP* SUB* #0000                   ( coarse* fine* )
+  &loop_fine
+    INC* DUP* ORA ,&loop_fine JCN
+  &loop_coarse
+    SWP* INC* SWP* OVR* ORA ,&loop_fine JCN
+  POP* POP* RETURN
 
 
-@draw_menu_background ( -- )
-  #01 ;fill_screen CALL
-  !center_x #0040 SUB2 >SCREEN.X
-  !center_y #0030 SUB2 >SCREEN.Y
-  DEC_X DEC_Y
-  #00 #0082 #0062 ;draw_rect CALL
-  !SCREEN.X #0002 SUB2 >SCREEN.X
-  !SCREEN.Y #0002 SUB2 >SCREEN.Y
-  #02 #0086 #0066 ;draw_rect CALL
+@print_newline LIT <LINEFEED> /CONSOLE.WRITE! RETURN
+@print_space   LIT <SPACE>    /CONSOLE.WRITE! RETURN
+
+( Print a byte to the console in binary )
+@print_byte_binary                        ( byte -- )
+  #80
+  &loop                                   ( byte mask )
+    ANDk TO_BOOL LIT* "01 CHOOSE            ( byte mask ascii )
+    /CONSOLE.WRITE! SHR1 DUP ,&loop JCN     ( byte mask )
+  &end POP* RETURN
+
+
+( Print a single byte to the console in decimal )
+@print_byte_decimal_signed               ( byte -- )
+  DUP* IS_POSITIVE ,print_byte_decimal JCN
+  LIT "- /CONSOLE.WRITE! NEGATE
+@print_byte_decimal                      ( byte -- )
+  ;convert_byte_to_decimal_string CALL
+  PRINTF(%s) RETURN
+
+( Print a single short to the console in decimal )
+@print_short_decimal_signed               ( short* -- )
+  DUP* IS_POSITIVE* ,print_short_decimal JCN
+  LIT "- /CONSOLE.WRITE! NEGATE*
+@print_short_decimal                      ( short* -- )
+  ;convert_short_to_decimal_string CALL
+  PRINTF(%s) RETURN
+
+( Print a null-terminated string to the console )
+@print_string                             ( text_addr* -- )
+  &loop  LDAk DUP ,&print JCN POP POP* RETURN
+  &print /CONSOLE.WRITE! INC* ,&loop JMP
+
+( Print a value as TRUE or FALSE )
+@print_bool_short                         ( bool* -- )
+  TO_BOOL*
+@print_bool                               ( bool -- )
+  ;&true ROT ,&print JCN POP* ;&false &print PRINTF(%s) RETURN
+  &true  "TRUE <NULL>  &false "FALSE <NULL>
+
+
+( Print a region of memory to the console as shorts, excluding the end address )
+@print_memory_region_shorts  ( start* end* -- )
+  SWP*
+  &loop
+    EQUk* ,&end JCN
+    LDAk* PRINTF(%d*\s)
+    INC* INC* ,&loop JMP
+  &end POP* POP* PRINTF(\n) RETURN
+
+( Convert an integer to a null-terminated string )
+@convert_byte_to_decimal_string           ( byte -- text_addr* )
+  TO_SHORT
+@convert_short_to_decimal_string          ( value* -- text_addr* )
+  ;&array_end SWP*
+  &loop                                   ( addr* value* )
+    #000a DIVMOD*                           ( addr* value/10* digit* )
+    DIGIT_TO_ASCII                          ( addr* value* junk ascii )
+    ROT* STAk NIP* DEC* SWP*                ( addr-1* value* )
+    DUP* ADD ,&loop JCN                     ( addr* value* )
+  &end
+    POP* INC* RETURN                        ( text_addr* )
+  &array $4 &array_end $1 <NULL>
+
+
+( ---------------------------------------------------------------------------- )
+(                U S E R   I N T E R F A C E   F R A M E W O R K               )
+(                                                                              )
+( A declarative callback-driven graphical user interface framework.            )
+( Enterprise-ready, functional, highly-available.                              )
+
+( The center point of the screen, half-width and half-height )
+%/I.CENTER.X        { #e3 }     %/I.CENTER.X?        { #e3 LDZ* }     %/I.CENTER.X!        { #e3 STZ* }
+%/I.CENTER.Y        { #e5 }     %/I.CENTER.Y?        { #e5 LDZ* }     %/I.CENTER.Y!        { #e5 STZ* }
+( The last-known position of the mouse cursor )
+%/I.CURSOR.X        { #e7 }     %/I.CURSOR.X?        { #e7 LDZ* }     %/I.CURSOR.X!        { #e7 STZ* }
+%/I.CURSOR.Y        { #e9 }     %/I.CURSOR.Y?        { #e9 LDZ* }     %/I.CURSOR.Y!        { #e9 STZ* }
+( Edge states for mouse and controller )
+%/I.BUTTON.PRESSED  { #eb }     %/I.BUTTON.PRESSED?  { #eb LDZ }      %/I.BUTTON.PRESSED!  { #eb STZ }
+%/I.BUTTON.HELD     { #ec }     %/I.BUTTON.HELD?     { #ec LDZ }      %/I.BUTTON.HELD!     { #ec STZ }
+%/I.BUTTON.RELEASED { #ed }     %/I.BUTTON.RELEASED? { #ed LDZ }      %/I.BUTTON.RELEASED! { #ed STZ }
+%/I.MOUSE.PRESSED   { #ee }     %/I.MOUSE.PRESSED?   { #ee LDZ }      %/I.MOUSE.PRESSED!   { #ee STZ }
+%/I.MOUSE.HELD      { #ef }     %/I.MOUSE.HELD?      { #ef LDZ }      %/I.MOUSE.HELD!      { #ef STZ }
+%/I.MOUSE.RELEASED  { #f0 }     %/I.MOUSE.RELEASED?  { #f0 LDZ }      %/I.MOUSE.RELEASED!  { #f0 STZ }
+
+( The index of the currently-selected UI element )
+%/I.ACTIVE_ELEMENT   { #f1 }    %/I.ACTIVE_ELEMENT?  { #f1 LDZ }      %/I.ACTIVE_ELEMENT!  { #f1 STZ }
+( The index of the previously-selected UI element )
+%/I.PREV_ELEMENT     { #f2 }    %/I.PREV_ELEMENT?    { #f2 LDZ }      %/I.PREV_ELEMENT!    { #f2 STZ }
+( The total number of registered UI elements for this screen )
+%/I.NUM_ELEMENTS     { #f3 }    %/I.NUM_ELEMENTS?    { #f3 LDZ }      %/I.NUM_ELEMENTS!    { #f3 STZ }
+( The orientation of the UI for this screen. 0: horizontal, 1: vertical )
+%/I.ORIENTATION      { #f4 }    %/I.ORIENTATION?     { #f4 LDZ }      %/I.ORIENTATION!     { #f4 STZ }
+( The memory address of the current colour palette )
+%/I.PALETTE_ADDR     { #f5 }    %/I.PALETTE_ADDR?    { #f5 LDZ* }     %/I.PALETTE_ADDR!    { #f5 STZ* }
+( The number of steps in the current colour palette )
+%/I.PALETTE_SIZE     { #f7 }    %/I.PALETTE_SIZE?    { #f7 LDZ }      %/I.PALETTE_SIZE!    { #f7 STZ }
+( The position of the mouse cursor when mouse button 1 was last pressed )
+%/I.MOUSE1.X         { #f8 }    %/I.MOUSE1.X?        { #f8 LDZ* }     %/I.MOUSE1.X!        { #f8 STZ* }
+%/I.MOUSE1.Y         { #fa }    %/I.MOUSE1.Y?        { #fa LDZ* }     %/I.MOUSE1.Y!        { #fa STZ* }
+( The position of the mouse cursor when mouse button 2 was last pressed )
+%/I.MOUSE2.X         { #fc }    %/I.MOUSE2.X?        { #fc LDZ* }     %/I.MOUSE2.X!        { #fc STZ* }
+%/I.MOUSE2.Y         { #fe }    %/I.MOUSE2.Y?        { #fe LDZ* }     %/I.MOUSE2.Y!        { #fe STZ* }
+
+( Constants )
+%HORIZONTAL          { #00 }    %VERTICAL   { #01 }
+
+( Actions )
+%CENTER_LEFT?  { /I.CENTER.X? SWP* SUB* }   %CENTER_LEFT!  { CENTER_LEFT?  /SCREEN.X! }
+%CENTER_RIGHT? { /I.CENTER.X? ADD* }        %CENTER_RIGHT! { CENTER_RIGHT? /SCREEN.X! }
+%CENTER_UP?    { /I.CENTER.Y? SWP* SUB* }   %CENTER_UP!    { CENTER_UP?    /SCREEN.Y! }
+%CENTER_DOWN?  { /I.CENTER.Y? ADD* }        %CENTER_DOWN!  { CENTER_DOWN? /SCREEN.Y! }
+
+
+
+( Draw all UI elements )
+@ui__draw_all                             ( -- )
+  /I.NUM_ELEMENTS? #00                      ( count index )
+  &loop                                     ( count index )
+    EQUk ,&end JCN                          ( count index )
+    DUP ;ui__draw_single CALL               ( count index )
+    INC ,&loop JMP                          ( count index )
+  &end                                      ( count index )
+    POP* RETURN                             ( -- )
+
+( Draw a single UI element by index )
+@ui__draw_single                          ( index -- )
+  DUP /I.ACTIVE_ELEMENT? EQU SWP            ( active? index )
+  ;ui__callbacks/draw ,__ui__call_callback JMP
+( Call a callback for a specific UI element, [ index -- ] )
+@ui__press_inc ;ui__callbacks/dec ,__ui__call_callback JMP
+@ui__press_dec ;ui__callbacks/inc ,__ui__call_callback JMP
+@ui__press_go  ;ui__callbacks/go  ,__ui__call_callback JMP
+( Calculate and call the real address of a callback )
+@__ui__call_callback                      ( index slot_addr* )
+  ROT DOUBLE TO_SHORT                       ( slot_addr* offset* )
+  ADD* LDA*                                 ( real_callback_addr* )
+  CALL_RET                                  ( -- )
+
+( Register a separate callback for each user interface element.
+  Each of the following subroutines accepts a list of pairs of a control index
+  and a callback address, followed by the number of pairs that were provided.
+  For example:   [ #00 ;func0 #01 ;func1 #04 ;func4 #03 ]
+  Draw callbacks MUST consume the 1-byte 'active?' bool that is passed to them.
+  Controller input callbacks (left, right, A) do not receive any data.
+  Callbacks are expected to return, and so SHOULD consume the return address
+  on the return stack by calling RETURN or NORETURN.
+  Signature for each 'register' subroutine is: [index callback*]+ count -- )
+@ui__register_draw_callbacks ;ui__callbacks/draw ,__ui__register_callbacks JMP
+@ui__register_dec_callbacks  ;ui__callbacks/inc  ,__ui__register_callbacks JMP
+@ui__register_inc_callbacks  ;ui__callbacks/dec  ,__ui__register_callbacks JMP
+@ui__register_go_callbacks   ;ui__callbacks/go   ,__ui__register_callbacks JMP
+@__ui__register_callbacks                 ( [index callback*]+ count slot_addr* -- )
+  ,&slot_addr STR*                          ( [index callback*]+ count )
+  &loop                                     ( [index callback*]+ count )
+    STH ROT DOUBLE TO_SHORT                 ( ... callback* offset* | count )
+    [ LIT* &slot_addr $2 ] ADD* STA*        ( ... | count )
+    STHr DEC DUP ,&loop JCN                 ( ... count )
+  POP RETURN                                ( -- )
+
+( Register callbacks for raw button handling. [ addr* -- ] )
+@ui__register_left_callback   ;ui__callbacks/left    STA* RETURN
+@ui__register_right_callback  ;ui__callbacks/right   STA* RETURN
+@ui__register_up_callback     ;ui__callbacks/up      STA* RETURN
+@ui__register_down_callback   ;ui__callbacks/down    STA* RETURN
+@ui__register_A_callback      ;ui__callbacks/A       STA* RETURN
+@ui__register_B_callback      ;ui__callbacks/B       STA* RETURN
+@ui__register_start_callback  ;ui__callbacks/start   STA* RETURN
+@ui__register_select_callback ;ui__callbacks/select  STA* RETURN
+@ui__register_mouse1_callback ;ui__callbacks/mouse1  STA* RETURN
+@ui__register_mouse2_callback ;ui__callbacks/mouse2  STA* RETURN
+
+
+( Register a single screen rect for each of multiple UI elements )
+@ui__register_zones                       ( [index left* top* width* height*]+ count -- )
+  ( Note: We decrement right* and bottom* because the bounds of the zone are inclusive )
+  &loop STH STH* STH* STH* STH*             ( ... [index] | count height* width* top* left* )
+  TO_SHORT MUL8* ;ui__zones ADD*            ( ... zone_left_addr* | count height* width* top* left* )
+  STHkr* ROTr* ADDr* DECr* STHr*            ( ... zone_left_addr* left* right* | count height* top* )
+  STHkr* ADDr* DECr* STH* STH*              ( ... zone_left_addr* left*  | count bottom* top* right* )
+  OVR* STA* ADD2*                           ( ... zone_right_addr* | count bottom* top* right* )
+  STHr* OVR* STA* ADD2*                     ( ... zone_top_addr* | count bottom* top* )
+  STHr* OVR* STA* ADD2*                     ( ... zone_bottom_addr* | count bottom* )
+  STHr* SWP* STA* STHr                      ( ... count )
+  DEC DUP ,&loop JCN
+  POP RETURN
+
+( Call once the callbacks for all controls have been registered. This will
+  draw each control on-screen and will hi-jack all controller input in order
+  to automatically handle all control interaction. )
+@ui__run_blank                       ( -- )
+  #0000 #00
+@ui__run                                  ( active_element total_elements orientation -- )
+  /I.ORIENTATION! /I.NUM_ELEMENTS!          ( active )
+  DUP /I.ACTIVE_ELEMENT! /I.PREV_ELEMENT!   ( -- )
+  ;ui__draw_all CALL
+  ;ui__on_screen /SCREEN.VECTOR!
+  ;ui__on_mouse /MOUSE.VECTOR!
+  ;ui__on_controller /CONTROLLER.VECTOR!
+  ( Clear both of the stacks, in case some junk data has been left on them )
+  #00 /SYSTEM.WST! #00 /SYSTEM.RST! BRK     ( -- )
+
+
+( Clears all of the callbacks and zones that were defined by the previous
+  screen, and wipes the foreground layer of the screen device. Call this
+  subroutine before registering controls for a screen, to ensure that no
+  configurations are left over from the previous screen. )
+@ui__clear
+ ( Recalculate the screen center )
+  /SCREEN.WIDTH?  HALVE* /I.CENTER.X!
+  /SCREEN.HEIGHT? HALVE* /I.CENTER.Y!
+ ( Clear mouse button state, to prevent weird clicks when the new UI comes up )
+  #0000 #00 /I.MOUSE.PRESSED! /I.MOUSE.HELD! /I.MOUSE.RELEASED!
+ ( Erase foreground layer of screen device )
+  COL_00 AND_FG ;sprite/blank ;fill_screen_with_sprite CALL
+ ( Clear all registered controller callbacks )
+  ;ui__callbacks ;ui__callbacks/end ;&null_callback
+  ;ui__clear_memory_region CALL
+ ( Clear all registered draw and mouse callbacks )
+  ;ui__callbacks/draw ;ui__callbacks/end ;&pop_null_callback
+  ;ui__clear_memory_region CALL
+ ( Clear all registered mouse zones )
+  ;ui__zones ;ui__zones/end #0000
+  ;ui__clear_memory_region CALL
+ ( Set mouse colour to 0 )
+  COL_T1 ;ui__set_cursor_colour CALL_RET
+  &pop_null_callback POP
+  &null_callback     RETURN
+
+@ui__set_cursor_colour                    ( sprite_colour -- )
+  ;ui__redraw_cursor/cursor_colour STA RETURN
+
+( Fill a region of memory with a given value. )
+@ui__clear_memory_region                  ( start_addr* end_addr* value* -- )
+  STH* SWP*                                 ( end* addr* | val* )
+  &loop                                     ( end* addr* | val* )
+    EQUk* ,&end JCN                         ( end* addr* | val* )
+    STHkr* OVR* STA*                        ( addr* )
+    INC* INC* ,&loop JMP                    ( end* addr* | val* )
+  &end POP* POP* POPr* RETURN
+
+( Mouse vector )
+@ui__on_mouse                             ( -- )
+  ;update_mouse_states CALL
+  ,&mouse1_pressed  JSR
+  ,&mouse2_pressed  JSR
+  MOUSE_MASK_1 ,&mask STR ;ui__callbacks/mouse1 ,&callback STR*
+  ,&mouse_held     JSR
+  ,&mouse_released JSR
+  MOUSE_MASK_2 ,&mask STR ;ui__callbacks/mouse2 ,&callback STR*
+  ,&mouse_held     JSR
+  ,&mouse_released JSR
+  ,&cursor_moved    JSR
+  ;ui__update_cursor_position CALL BRK
+  &mask $1 &callback $2
+
+  &mouse1_pressed
+    /I.MOUSE.PRESSED? MOUSE_MASK_1 IF_NOT_MASK RETURN
+    ;ui__press_go ;ui__call_on_hovered_element CALL
+    ;ui__redraw_controls CALL
+    ;ui__restart_mouse1_drag CALL_RET
+  &mouse2_pressed
+    /I.MOUSE.PRESSED? MOUSE_MASK_2 IF_NOT_MASK RETURN
+    ;ui__restart_mouse2_drag CALL_RET
+  &mouse_held
+    /I.MOUSE.HELD? [ ,&mask LDR ] IF_NOT_MASK RETURN
+    ,&did_cursor_move JSR IF_FALSE RETURN
+    #00 [ ,&callback LDR* ] LDA* CALL_RET
+  &mouse_released
+    /I.MOUSE.RELEASED? [ ,&mask LDR ] IF_NOT_MASK RETURN
+    #01 [ ,&callback LDR* ] LDA* CALL_RET
+  &cursor_moved
+    ,&did_cursor_move JSR IF_FALSE RETURN
+   ( Only draw the mouse cursor if at least one UI element has been registered )
+    ;ui__redraw_cursor CALL
+    /I.NUM_ELEMENTS? IF_FALSEY RETURN
+    ;ui__set_active_control ;ui__call_on_hovered_element CALL_RET
+  &did_cursor_move                        ( -- moved? )
+    /I.CURSOR.X? /MOUSE.X? NEQ*             ( diff_x? )
+    /I.CURSOR.Y? /MOUSE.Y? NEQ*             ( diff_x? diff_y? )
+    ORA RETURN                              ( moved? )
+
+@ui__redraw_cursor
+  ;sprite/cursor /SCREEN.ADDR!
+ ( Erase the mouse cursor from the previous mouse position )
+  /I.CURSOR.X? /SCREEN.X! /I.CURSOR.Y? /SCREEN.Y!
+  COL_00 AND_FG /SCREEN.SPRITE!
+ ( Draw the mouse cursor under the current mouse position )
+  /MOUSE.X? /SCREEN.X! /MOUSE.Y? /SCREEN.Y!
+  [ LIT &cursor_colour $1 ] AND_FG /SCREEN.SPRITE!
   RETURN
 
+@ui__restart_mouse1_drag                  ( -- )
+  /MOUSE.X? /I.MOUSE1.X! /MOUSE.Y? /I.MOUSE1.Y! RETURN
+@ui__restart_mouse2_drag                  ( -- )
+  /MOUSE.X? /I.MOUSE2.X! /MOUSE.Y? /I.MOUSE2.Y! RETURN
+@ui__update_cursor_position
+  /MOUSE.X? /I.CURSOR.X! /MOUSE.Y? /I.CURSOR.Y! RETURN
 
 
-
-@draw_menu_background_old ( -- )
-  #00 ;fill_screen CALL
-  !center_x #0040 SUB2 >SCREEN.X
-  !center_y #0030 SUB2 >SCREEN.Y
-  #01 #0080 #0060 ;draw_filled_rect CALL
-  DEC_X DEC_Y
-  #02 #0082 #0062 ;draw_rect CALL
-  !SCREEN.X #0002 SUB2 >SCREEN.X
-  !SCREEN.Y #0002 SUB2 >SCREEN.Y
-  #02 #0086 #0066 ;draw_rect CALL
-  RETURN
-
-
-@reset_scheme_counter
-  #0000 ;on_screen/counter STA2
-  RETURN
-
-
-
-
-
-
-@load_image_screen
-  DEBUG
-
-
-@canvas_screen
-
-
-@increment_value_at_addr ( addr* -- )
-  DUP2 LDA2 INC2 SWP2 STA2 RETURN
-@decrement_value_at_addr ( addr* -- )
-  DUP2 LDA2 DEC2 SWP2 STA2 RETURN
-
-
-
-
-@draw_workspace ( -- )
-  #02 ;fill_screen CALL
-  ;draw_canvas CALL
-  RETURN
-
-
-@draw_canvas ( -- )
-  !canvas_x >SCREEN.X !canvas_y >SCREEN.Y
-  ;canvas_buffer ;draw_1bit_buffer CALL
-  RETURN
-
-
-@draw_cursor ( -- )
-  !cursor_x !cursor_y                        ( screen_x* screen_y* )
-  ;cursor_sprite SCREEN.ADDR DEO2
-
-  OVR2 #0004 SUB2 >SCREEN.X
-  DUP2 #0004 SUB2 >SCREEN.Y
-  #c5 SCREEN.SPRITE DEO
-  OVR2 #0003 SUB2 >SCREEN.X
-  DUP2 #0003 SUB2 >SCREEN.Y
-  #f5 SCREEN.SPRITE DEO
-  POP2 POP2 RETURN
-  @cursor_sprite 1c1c 08c0 e0c0 0000 0008 0000 4000 0000
-
-
-@erase_cursor ( -- )
-  !cursor_x !cursor_y                        ( x* y* )
-
-  OVR2 #0004 SUB2 >SCREEN.X
-  DUP2 #0004 SUB2 >SCREEN.Y
-  #40 SCREEN.SPRITE DEO
-  OVR2 #0003 SUB2 >SCREEN.X
-  DUP2 #0003 SUB2 >SCREEN.Y
-  #40 SCREEN.SPRITE DEO
-  POP2 POP2 RETURN
-
-
-@canvas_coord_to_screen ( canvas_x* canvas_y* -- screen_x* screen_y* )
-  SWP2 !canvas_x ADD2
-  SWP2 !canvas_y ADD2
-  RETURN
-
-
-@screen_coord_to_canvas ( screen_x* screen_y* -- canvas_x* canvas_y* )
-  SWP2 !canvas_x SUB2                        ( screen_y* canvas_x* )
-  SWP2 !canvas_y SUB2                        ( canvas_x* canvas_y* )
-  RETURN
-
-
-@canvas_coord_to_offset_and_mask ( canvas_x* canvas_y* -- offset* mask )
-  !canvas_width MUL2 ADD2                    ( pixel_index* )
-  DUP2 #0008 DIV2                            ( pixel_index* offset* )
-  SWP2 #0008 MOD2 NIP                        ( offset* bit_id_lit_endian )
-  #07 SWP SUB                                ( offset* bit_id_big_endian )
-  #40 SFT #01 SWP SFT                        ( offset* mask )
-  ( #40 SFT moves low nibble to high nibble, making the next SFT a left-shift )
-  RETURN
-
-
-@toggle_pixel ( canvas_x* canvas_y* -- )
-  ;canvas_coord_to_offset_and_mask CALL      ( offset* mask )
-  DUP SWP2                                   ( mask* offset* )
-  ;canvas_buffer ADD2                        ( mask* byte_address* )
-  DUP2 LDA                                   ( mask* byte_address* byte )
-  DUP ROT2                                   ( byte_address* byte* mask* )
-  ROT POP2                                   ( byte_address* byte mask )
-  EOR                                        ( byte_address* byte )
-  ROT ROT STA
-  RETURN
-
-
-@set_pixel ( canvas_x* canvas_y* -- )
-  OVR2 OVR2                                  ( canvas_x* canvas_y* canvas_x* canvas_y* )
-  ;canvas_coord_to_screen CALL               ( canvas_x* canvas_y* screen_x* screen_y* )
-  >SCREEN.Y >SCREEN.X #01 >SCREEN.PIXEL      ( canvas_x* canvas_y* )
-  ;canvas_coord_to_offset_and_mask CALL      ( offset* mask )
-  DUP SWP2                                   ( mask* offset* )
-  ;canvas_buffer ADD2                        ( mask* byte_address* )
-  DUP2 LDA                                   ( mask* byte_address* byte )
-  DUP ROT2                                   ( byte_address* byte* mask* )
-  ROT POP2                                   ( byte_address* byte mask )
-  ORA                                        ( byte_address* byte )
-  ROT ROT STA
-  RETURN
-
-
-@update_button_states ( -- )
-  !CONTROLLER.BUTTON DUP DUP2                ( held held held held )
-  !button_held                               ( held held held held prev_held )
-  EOR AND                                    ( held held leading_edge )
-  DUP ROT EOR                                ( held leading_edge falling_edge )
-  >button_released
-  >button_pressed
-  >button_held
-  RETURN
-
-
-@on_controller ( -- )
+( The main controller logic, this handles all interactions with the declared
+  user interface )
+@ui__on_controller
   ;update_button_states CALL
-  !button_pressed #10 AND ,&up JCN
-  !button_pressed #20 AND ,&down JCN
-  !button_pressed #40 AND ,&left JCN
-  !button_pressed #80 AND ,&right JCN
-  !button_pressed #01 AND ,&a JCN
-  BRK
+  /I.BUTTON.PRESSED? IF_FALSEY BRK
+  ( mask              on_button              horz. vert.     )
+  BUTTON_MASK_UP      ;ui__callbacks/up      ;&inc ;&prev  ,&call_if_pressed JSR
+  BUTTON_MASK_DOWN    ;ui__callbacks/down    ;&dec ;&next  ,&call_if_pressed JSR
+  BUTTON_MASK_LEFT    ;ui__callbacks/left    ;&prev ;&dec  ,&call_if_pressed JSR
+  BUTTON_MASK_RIGHT   ;ui__callbacks/right   ;&next ;&inc  ,&call_if_pressed JSR
+  BUTTON_MASK_A       ;ui__callbacks/A       ;&go    DUP*  ,&call_if_pressed JSR
+  BUTTON_MASK_B       ;ui__callbacks/B       ;&null  DUP*  ,&call_if_pressed JSR
+  BUTTON_MASK_START   ;ui__callbacks/start   ;&null  DUP*  ,&call_if_pressed JSR
+  BUTTON_MASK_SELECT  ;ui__callbacks/select  ;&null  DUP*  ,&call_if_pressed JSR
+  ;ui__redraw_controls CALL BRK
+  ( Call callbacks if the button matching this mask was pressed.
+   Takes a normal callback and two orientation-dependant callbacks.
+   The normal callback is always called, but only the orientation-dependant
+   callback that matches the current UI orientation will be called.  )
+  &call_if_pressed                        ( mask callback* horz_callback* vert_callback* -- )
+    STH* STH* /I.ORIENTATION? STHr* STHr*   ( mask callback* ui_callback* )
+    CHOOSE* ,&ui_callback STR*              ( mask callback* )
+    LDA* ,&callback STR*                    ( mask )
+    /I.BUTTON.PRESSED? IF_NOT_MASK RETURN   ( -- )
+    LIT* &ui_callback $2 CALL               ( -- )
+    LIT* &callback $2 CALL_RET              ( -- )
+  &prev                                   ( -- )
+    /I.ACTIVE_ELEMENT? IF_FALSEY RETURN
+    /I.ACTIVE_ELEMENT DEC_Z RETURN
+  &next                                   ( -- )
+    /I.ACTIVE_ELEMENT? INC /I.NUM_ELEMENTS? IF_EQUAL RETURN
+    /I.ACTIVE_ELEMENT INC_Z RETURN
+  &dec   /I.ACTIVE_ELEMENT? ;ui__press_dec CALL_RET
+  &inc   /I.ACTIVE_ELEMENT? ;ui__press_inc CALL_RET
+  &go    /I.ACTIVE_ELEMENT? ;ui__press_go  CALL_RET
+  &null  RETURN
 
-  &up
-    ;erase_cursor CALL !cursor_y DEC2 >cursor_y ;draw_cursor CALL BRK
-  &down
-    ;erase_cursor CALL !cursor_y INC2 >cursor_y ;draw_cursor CALL BRK
-  &left
-    ;erase_cursor CALL !cursor_x DEC2 >cursor_x ;draw_cursor CALL BRK
-  &right
-    ;erase_cursor CALL !cursor_x INC2 >cursor_x ;draw_cursor CALL BRK
-  &a
-    !cursor_x !cursor_y                      ( screen_x* screen_y* )
-    ;screen_coord_to_canvas CALL             ( canvas_x* canvas_y* )
-    ;set_pixel CALL BRK
+( Redraw the active and previously-active controls, and set prev_active to active )
+@ui__redraw_controls                      ( -- )
+ ( Return if no controls have been registered )
+  /I.NUM_ELEMENTS? ,&cont JCN RETURN &cont
+  /I.ACTIVE_ELEMENT? /I.PREV_ELEMENT?       ( active prev_active )
+  ;ui__draw_single CALL                     ( active // draw prev_active input )
+  DUP /I.PREV_ELEMENT!                      ( active )
+  ;ui__draw_single CALL
+  ;ui__restart_palette CALL_RET
 
+( Update the active control and redraw the screen )
+@ui__set_active_control                   ( index -- )
+  DUP /I.ACTIVE_ELEMENT? NEQ ,&cont JCN POP RETURN
+  &cont /I.ACTIVE_ELEMENT! ;ui__redraw_controls CALL_RET
 
-@on_mouse ( -- )
-  !cursor_x !MOUSE.X NEQ2                    ( is_x_different )
-  !cursor_y !MOUSE.Y NEQ2                    ( is_x_different is_y_different )
-  ADD                                        ( is_mouse_different )
-  BREAK_IF_NOT
+( If there is a control under the mouse cursor, push the index of that
+  control to the stack and call the given routine. The index must be
+  consumed by the routine. )
+@ui__call_on_hovered_element              ( func_addr* -- )
+  #00
+  &loop                                   ( f_addr* i )
+    DUP TO_SHORT MUL8*                      ( f_addr* i ix8* )
+    ;ui__zones ADD*                         ( f_addr* i zone_left_addr* )
+   ( Test horizontal bounds )
+    /I.CURSOR.X? OVR* LDA* LTH* STH         ( f_addr* i zone_left_addr* | lth_left? )
+    #0002 ADD*                              ( f_addr* i zone_right_addr* | lth_left? )
+    /I.CURSOR.X? OVR* LDA* GTH* STHr        ( f_addr* i zone_right_addr* gth_right? lth_left? )
+    ADD ,&no_match JCN #0002 ADD*           ( f_addr* i zone_top_addr* )
+   ( Test vertical bounds )
+    /I.CURSOR.Y? OVR* LDA* LTH* STH         ( f_addr* i zone_top_addr* | lth_top? )
+    #0002 ADD*                              ( f_addr* i zone_bot_addr* )
+    /I.CURSOR.Y? OVR* LDA* GTH* STHr        ( f_addr* i zone_top_addr* gth_bot? lth_top? )
+    ADD ,&no_match JCN POP* ,&match JMP     ( // varies )
+  &no_match                               ( f_addr* i junk_addr* )
+    POP* INC DUP /I.NUM_ELEMENTS?           ( f_addr* i i count )
+    LTH ,&loop JCN                          ( f_addr* i )
+    POP POP* RETURN                         ( -- )
+  &match                                  ( f_addr* i )
+    ROT ROT GOTO                            ( i )
 
-  ;erase_cursor CALL                         ( -- )
-  !MOUSE.X >cursor_x
-  !MOUSE.Y >cursor_y
-  ;draw_cursor CALL
-
-  CONTROLLER.BUTTON DEI                      ( button )
-  #01 AND ,&draw JCN
-  BRK
-  &draw
-    !cursor_x !cursor_y ;screen_coord_to_canvas CALL ;set_pixel CALL
-  BRK
-
-
-@on_screen ( -- )
-  ;&counter LDA2k INC2 DUP2 ROT2 STA2                 ( counter* // increment the counter )
-  #03 SFT2 #0004 MOD2                                 ( 4-step-counter* )
-  #0006 MUL2                                          ( scheme_offset* )
-  ;colour_scheme_1 ADD2                               ( scheme_addr* )
-  ;load_colours CALL                                  ( -- )
-  BRK
+@ui__on_screen                            ( -- )
+  ( Check if a palette has been loaded by seeing if palette_size is greater than 0 )
+  /I.PALETTE_SIZE? ,&cycle_palette JCN
+  ;ui__initialise_colour_palette CALL BRK
+  &cycle_palette
+    ;&counter LDAk* INC* DUP* ROT* STA*     ( counter* // increment the frame counter )
+    #0009 DIV* #00 /I.PALETTE_SIZE?         ( counter/9* palette_size* )
+    MOD* #0006 MUL*                         ( addr_offset* )
+    /I.PALETTE_ADDR? ADD*        ( palette_addr* )
+    ;load_colour_palette CALL               ( -- )
+    BRK
   &counter $2
 
-( ------------------------------------------------------------------------------- )
-(                    C O N V E R S I O N   P R O C E D U R E S                    )
+( Use a new colour palette for the UI. 'size' must be 1 or greater. )
+@ui__set_colour_palette                   ( palette_addr* size )
+  /I.PALETTE_SIZE! /I.PALETTE_ADDR! RETURN
 
-@convert_short_to_decimal_string ( value* -- text_addr* )
-  ;&text_addr                                 ( value* digit_addr* )
-  OVR2 #000a LTH2 ,&parse JCN INC2           ( // jump if number has 1 digit  )
-  OVR2 #0064 LTH2 ,&parse JCN INC2           ( // jump if number has 2 digits )
-  OVR2 #03e8 LTH2 ,&parse JCN INC2           ( // jump if number has 3 digits )
-  OVR2 #2710 LTH2 ,&parse JCN INC2           ( // jump if number has 4 digits )
+( Attempt to load the colour palette from the .theme file, otherwise fall
+  back to a default palette. )
+@ui__initialise_colour_palette
+  ( TODO: Implement .theme file loading )
+  ;&default_palette /I.PALETTE_ADDR!
+  #01 /I.PALETTE_SIZE! RETURN
+  &default_palette 1d9b 1613 1011
 
-  &parse
-    DUP2 INC2 #00 ROT ROT                    ( value* digit_addr* 00 null_addr* )
-    STA SWP2                                 ( digit_addr* value* )
-  &loop
-    DUP2 #000a MOD2                          ( digit_addr* value* remainder* )
-    SWP2 #000a DIV2 SWP2                     ( digit_addr* value* remainder* )
-    NIP #30 ADD DUP                          ( digit_addr* value* ascii* )
-    ROT2 SWP2                                ( value* digit_addr* ascii* )
-    OVR2 ROT POP                             ( value* digit_addr* ascii digit_addr* )
-    STA DEC2 SWP2                            ( digit_addr* value* )
-    OVR2 INC2 ;&text_addr NEQ2 ,&loop JCN
-  POP2 INC2 RETURN                           ( text_addr* )
-  &text_addr $5 00
+( Resets the frame counter used for pulsing the screen colours )
+@ui__restart_palette
+  #0000 ;ui__on_screen/counter STA* RETURN
 
-@choose ( flag false_value true_value -- value )
-  ROT #01 JCN SWP NIP RETURN
+( Callbacks are two-byte addresses )
+@ui__callbacks
+ ( One callback per UI element, signature [ -- ] )
+  &dec    $32
+  &inc    $32
+  &go     $32
+ ( One callback per controller button, signature [ -- ] )
+  &left   $2
+  &right  $2
+  &up     $2
+  &down   $2
+  &A      $2
+  &B      $2
+  &start  $2
+  &select $2
+ ( One callback per UI element, signature [ a -- ] )
+  &draw   $32
+ ( One callback per mouse action, signature [ state -- ]. 0: held, 1: released  )
+  &mouse1 $2
+  &mouse2 $2
+  &end
+( Zones are groups of left* right* top* bottom* inclusive bounds for each control )
+@ui__zones
+  $128
+  &end
 
-( ------------------------------------------------------------------------------- )
-(                  U S E R   I N T E R F A C E   E L E M E N T S                  )
+( Update the global button-state variables on the zero page )
+@update_button_states ( -- )
+  /CONTROLLER.BUTTON? DUP /I.BUTTON.HELD? DUPk*    ( held now prev now prev now prev )
+  EOR AND SWP SWP* EOR AND                         ( held released pressed )
+  /I.BUTTON.PRESSED! /I.BUTTON.RELEASED! /I.BUTTON.HELD! RETURN
 
-@draw_button ( colour width* text_addr* -- )
-  ,&text_addr STR2                           ( sprite_colour width* // store text_addr )
-  STH2 DUP ,&sprite_colour STR #02 SFT STH2r ( pixel_colour width* // store colour )
-  DUP2 ,&button_width STR2                   ( colour width* // store button width )
-  #000b ;draw_capsule CALL                   ( -- )
-  !SCREEN.Y #0002 ADD2 >SCREEN.Y             ( // move down to top of text )
-  !SCREEN.X ,&start_x STR2                   ( -- )
+( Update the global mouse-state variables on the zero page )
+@update_mouse_states ( -- )
+  /MOUSE.STATE? DUP /I.MOUSE.HELD? DUPk*    ( held now prev now prev now prev )
+  EOR AND SWP SWP* EOR AND                  ( held released pressed )
+  /I.MOUSE.PRESSED! /I.MOUSE.RELEASED! /I.MOUSE.HELD! RETURN
 
-  [ LIT &sprite_colour $1 ]
-  [ LIT2 &text_addr $2 ]
-  [ LIT2 &button_width $2 ]                  ( sprite_colour text_addr* button_width* )
+( ---------------------------------------------------------------------------- )
+(                        P R O G R A M   S C R E E N S                         )
 
-  OVR2 ;get_text_width CALL                  ( sprite_colour text_addr* button_width* text_width* )
-  SUB2 HALF2                                 ( sprite_colour text_addr* text_x_offset* )
-  !SCREEN.X ADD2 >SCREEN.X                   ( sprite_colour text_addr* )
-  ;draw_text CALL
+( Show the initial "Create/Load Image" screen )
+@launch_screen ( -- )
+  ;ui__clear CALL
+ ( Draw non-interactive elements )
+  ;draw_menu_background CALL
+  #001c CENTER_LEFT!
+  #0018 CENTER_UP!
+  COL_01 ;&title ;draw_text CALL
+ ( Register draw callbacks )
+  #00 ;launch_screen__draw__create_image
+  #01 ;launch_screen__draw__load_image
+  #02 ;ui__register_draw_callbacks CALL
+ ( Register controller callbacks )
+  #00 ;launch_screen__go__create_image
+  #01 ;launch_screen__go__load_image
+  #02 ;ui__register_go_callbacks CALL
+ ( Register mouse zones )
+  #00 #0032 CENTER_LEFT? #0008 CENTER_DOWN? #0064 #000b
+  #01 #0032 CENTER_LEFT? #0014 CENTER_DOWN? #0064 #000b
+  #02 ;ui__register_zones CALL
+ ( Finish callback registration )
+  #00 #02 VERTICAL ;ui__run GOTO
+  &title "TUNGSTEN <NULL>
+@launch_screen__draw__create_image        ( active? )
+  #0032 CENTER_LEFT! #0008 CENTER_DOWN!
+  COL_21 COL_31 CHOOSE                      ( colour )
+  #0064 ;&label ;draw_button CALL_RET       ( -- )
+  &label "Create <SPACE> "image <NULL>
+@launch_screen__draw__load_image          ( active? )
+  #0032 CENTER_LEFT! #0014 CENTER_DOWN!
+  COL_21 COL_31 CHOOSE                      ( colour )
+  #0064 ;&label ;draw_button CALL_RET       ( -- )
+  &label "Load <SPACE> "image <NULL>
+@launch_screen__go__create_image
+  NORETURN ;create_screen GOTO
+@launch_screen__go__load_image
+  NORETURN ;load_screen GOTO
 
-  !SCREEN.Y #0002 SUB2 >SCREEN.Y
-  [ LIT2 &start_x $2 ]  >SCREEN.X
+
+
+( Show the "Create Image" settings screen )
+@create_screen ( -- )
+  ;ui__clear CALL
+ ( Draw non-interactive elements )
+  ;draw_menu_background CALL
+ (     Draw title )
+  #0023 CENTER_LEFT! #002a CENTER_UP!
+  COL_01 ;&title ;draw_text CALL
+ (     Width/height labels )
+  #0032 CENTER_LEFT! #0006 CENTER_UP!
+  COL_01 ;&width_label ;draw_text CALL
+  #000c MOVE_DOWN
+  COL_01 ;&height_label ;draw_text CALL
+ ( Register draw callbacks )
+  #00 ;create_screen__draw__back
+  #01 ;create_screen__draw__mode
+  #02 ;create_screen__draw__width
+  #03 ;create_screen__draw__height
+  #04 ;create_screen__draw__confirm
+  #05 ;ui__register_draw_callbacks CALL
+ ( Register controller callbacks )
+  ;launch_screen ;ui__register_B_callback CALL
+  #00 ;create_screen__go__back
+  #01 ;create_screen__go__mode
+  #04 ;create_screen__go__confirm
+  #03 ;ui__register_go_callbacks CALL
+  #01 ;create_screen__dec__mode
+  #02 ;create_screen__dec__width
+  #03 ;create_screen__dec__height
+  #03 ;ui__register_dec_callbacks CALL
+  #01 ;create_screen__inc__mode
+  #02 ;create_screen__inc__width
+  #03 ;create_screen__inc__height
+  #03 ;ui__register_inc_callbacks CALL
+ ( Register mouse zones )
+  #00 #003c CENTER_LEFT?  #002c CENTER_UP?   #006a #000a
+  #01 #0032 CENTER_LEFT?  #0018 CENTER_UP?   #0064 #000d
+  #02 #0003 CENTER_RIGHT? #0008 CENTER_UP?   #002f #000a
+  #03 #0003 CENTER_RIGHT? #0004 CENTER_DOWN? #002f #000a
+  #04 #0032 CENTER_LEFT?  #001b CENTER_DOWN? #0064 #000a
+  #05 ;ui__register_zones CALL
+ ( Finish callback registration )
+  #01 #05 VERTICAL ;ui__run GOTO
+  &title "CREATE <SPACE> "IMAGE <NULL>
+  &width_label "Width: <NULL>
+  &height_label "Height: <NULL>
+@create_screen__draw__back                ( active? )
+  #003c CENTER_LEFT! #002c CENTER_UP!
+  COL_21 COL_31 CHOOSE                      ( colour )
+  ;sprite/back ;draw_icon_button CALL_RET   ( -- )
+@create_screen__draw__mode                ( active? )
+  #0032 CENTER_LEFT! #0018 CENTER_UP!
+  COL_20 SWP COL_21 COL_31 CHOOSE           ( bg fg )
+  #0064 ;&1_bit ;&2_bit /V.CANVAS.MODE?     ( bg fg width* t1* t2* val )
+  ;draw_toggle CALL_RET                     ( -- )
+  &1_bit "1-bit <NULL> &2_bit "2-bit <NULL>
+@create_screen__draw__width               ( active? )
+  #0003 CENTER_RIGHT! #0008 CENTER_UP!
+  STHk COL_21 COL_31 CHOOSE                 ( s_colour | active? )
+  #002f /V.CANVAS.WIDTH?                    ( s_colour width* width_val* | active? )
+  STHr ;draw_numeric_input CALL_RET         ( s_colour width* width_val* active? )
+@create_screen__draw__height              ( active? )
+  #0003 CENTER_RIGHT! #0004 CENTER_DOWN!
+  STHk COL_21 COL_31 CHOOSE                 ( s_colour | active? )
+  #002f /V.CANVAS.HEIGHT?                   ( s_colour width* height_val* | active? )
+  STHr ;draw_numeric_input CALL_RET         ( s_colour width* height_val* active? )
+@create_screen__draw__confirm
+  #0032 CENTER_LEFT! #001b CENTER_DOWN!
+  COL_12 COL_13 CHOOSE
+  #0064 ;&confirm ;draw_button CALL_RET
+  &confirm "CONFIRM <NULL>
+@create_screen__go__back
+  NORETURN ;launch_screen CALL_RET
+@create_screen__go__mode
+  /V.CANVAS.MODE? NOT /V.CANVAS.MODE! RETURN
+@create_screen__go__confirm
+  ;recenter_canvas CALL
+  NORETURN ;canvas_screen GOTO
+@create_screen__dec__mode
+  #00 /V.CANVAS.MODE! RETURN
+@create_screen__dec__width
+  /V.CANVAS.WIDTH? #0008 SUB* /V.CANVAS.WIDTH! RETURN
+@create_screen__dec__height
+  /V.CANVAS.HEIGHT? #0008 SUB* /V.CANVAS.HEIGHT! RETURN
+@create_screen__inc__mode
+  #01 /V.CANVAS.MODE! RETURN
+@create_screen__inc__width
+  /V.CANVAS.WIDTH? #0008 ADD* /V.CANVAS.WIDTH! RETURN
+@create_screen__inc__height
+  /V.CANVAS.HEIGHT? #0008 ADD* /V.CANVAS.HEIGHT! RETURN
+
+
+( Show the "Load Image" settings screen )
+@load_screen
+  ;ui__clear CALL
+ ( Draw non-interactive elements )
+  ;draw_menu_background CALL
+  #001d CENTER_LEFT! #002a CENTER_UP!
+  COL_01 ;&title ;draw_text CALL
+ ( Register draw callbacks )
+  #00 ;load_screen__draw__back
+  #01 ;load_screen__draw__path
+  #02 ;load_screen__draw__load
+  #03 ;ui__register_draw_callbacks CALL
+ ( Register controller callbacks )
+  ;launch_screen ;ui__register_B_callback CALL
+  #00 ;load_screen__go__back
+  #02 ;load_screen__go__load
+  #02 ;ui__register_go_callbacks CALL
+ ( Register mouse zones )
+  #00 #003c CENTER_LEFT? #002c CENTER_UP? #000a DUP*
+  #01 ;ui__register_zones CALL
+ ( Finish callback registration )
+  #01 #03 VERTICAL ;ui__run GOTO
+  &title "LOAD <SPACE> "IMAGE <NULL>
+@load_screen__draw__back
+  #003c CENTER_LEFT! #002c CENTER_UP!
+  COL_21 COL_31 CHOOSE
+  ;sprite/back ;draw_icon_button CALL_RET
+@load_screen__draw__path                  ( active? -- )
+  #003b CENTER_LEFT! #0000 CENTER_DOWN!
+  COL_21 COL_31 CHOOSE
+  #0074 ;&path ;draw_button CALL_RET
+  &path "/uxn/untitled.tng <NULL>
+@load_screen__draw__load
+  #0032 CENTER_LEFT! #001b CENTER_DOWN!
+  COL_12 COL_13 CHOOSE
+  #0064 ;&label ;draw_button CALL_RET
+  &label "LOAD <NULL>
+@load_screen__go__back
+  ;launch_screen GOTO
+@load_screen__go__load
+  ;recenter_canvas CALL
+  NORETURN ;canvas_screen GOTO
+
+@canvas_screen
+  ;ui__clear CALL
+  ;colour_palette_canvas #04 ;ui__set_colour_palette CALL
+  #03 ;ui__set_cursor_colour CALL
+  ;canvas_screen__draw  CALL
+  ;canvas_screen__tool ;ui__register_mouse1_callback CALL
+  ;canvas_screen__B    ;ui__register_B_callback      CALL
+  ;ui__run_blank GOTO
+  BRK
+@canvas_screen__draw  COL_2 ;fill_screen CALL ;draw_canvas CALL_RET
+@canvas_screen__B     NORETURN ;tool_palette_screen GOTO
+@canvas_screen__tool
+ ( Dispatch control to the routine of the active tool )
+  /V.ACTIVE_TOOL? MUL4 JMP
+  ;&pan     GOTO   ;&zoom GOTO   ;&brush_1 GOTO   ;&brush_2  GOTO
+  ;&brush_3 GOTO   ;&line GOTO   ;&rect    GOTO   ;&fill     GOTO
+
+  &pan ,&pan_released JCN                   ( released? -- )
+  &pan_held
+   ( Erase old indicator rectangle )
+    /I.CURSOR.X? /I.MOUSE1.X? SUB* /V.CANVAS.X? ADD* /SCREEN.X!
+    /I.CURSOR.Y? /I.MOUSE1.Y? SUB* /V.CANVAS.Y? ADD* /SCREEN.Y!
+    COL_0 AND_FG /V.CANVAS.WIDTH? /V.CANVAS.HEIGHT? ;draw_rect_outline CALL
+   ( Draw new indicator rectangle )
+    /MOUSE.X? /I.MOUSE1.X? SUB* /V.CANVAS.X? ADD* /SCREEN.X!
+    /MOUSE.Y? /I.MOUSE1.Y? SUB* /V.CANVAS.Y? ADD* /SCREEN.Y!
+    COL_3 AND_FG /V.CANVAS.WIDTH? /V.CANVAS.HEIGHT? ;draw_rect_outline CALL_RET
+  &pan_released
+    /MOUSE.X? /I.MOUSE1.X? SUB* /V.CANVAS.X? ADD* /V.CANVAS.X!
+    /MOUSE.Y? /I.MOUSE1.Y? SUB* /V.CANVAS.Y? ADD* /V.CANVAS.Y!
+    COL_0 ;fill_foreground CALL
+    ;canvas_screen__draw CALL_RET
+
+  &zoom    RETURN
+
+
+  &brush_1
+    POP
+    /MOUSE.X? /V.CANVAS.X? SUB* DUP* ,&brush_1_x STR*
+    /V.CANVAS.WIDTH? LTH* IF_FALSE RETURN
+    /MOUSE.Y? /V.CANVAS.Y? SUB* DUP* ,&brush_1_y STR*
+    /V.CANVAS.HEIGHT? LTH* IF_FALSE RETURN
+    [ LIT* &brush_1_x $2  LIT* &brush_1_y $2 ]
+    ;get_mask_and_address CALL    ( mask addr* )
+   ( Modify the canvas buffer )
+    LDAk STH ROT STHr ORA ROT ROT STA
+   ( Draw a dot to the screen without needing to redraw the entire buffer )
+    /MOUSE.X? /SCREEN.X! /MOUSE.Y? /SCREEN.Y! COL_1 /SCREEN.PIXEL!
+  RETURN
+
+  &brush_2 RETURN
+  &brush_3 RETURN
+  &line    RETURN
+  &rect    RETURN
+  &fill                                   ( released? -- )
+    IF_FALSE RETURN #01
+    /MOUSE.X? /V.CANVAS.X? SUB*
+    /MOUSE.Y? /V.CANVAS.Y? SUB*
+    ;fill_canvas_from_point CALL
+    ;draw_canvas CALL
+    RETURN
+
+( Render the canvas to the screen from the raw program data )
+@draw_canvas                              ( -- )
+  COL_2 ;fill_screen CALL                   ( -- )
+  #05 /SCREEN.AUTO!                         ( -- )
+  /V.CANVAS.Y? /SCREEN.Y!                   ( -- )
+  ;canvas_buffer /SCREEN.ADDR!              ( -- )
+  /V.CANVAS.HEIGHT? CEIL8DIV8*              ( sprite_height* )
+  &new_line                               ( sprite_height* )
+    /V.CANVAS.X? /SCREEN.X!                 ( sprite_height* )
+    /V.CANVAS.WIDTH? CEIL8DIV8*             ( sprite_height* sprite_width* )
+  &loop                                   ( sprite_height* sprite_width* )
+    COL_01 /SCREEN.SPRITE!                  ( sprite_height* sprite_width* )
+    DEC* DUP* GTH0* ,&loop JCN              ( sprite_height* sprite_width* )
+  &move_down                              ( sprite_height* sprite_width* )
+    POP* DEC* #0008 MOVE_DOWN               ( sprite_height* )
+    DUP* ADD ,&new_line JCN                 ( sprite_height* )
+  &end                                    ( 0* )
+    /SCREEN.AUTO! POP RETURN                ( -- )
+
+
+
+
+
+@tool_palette_screen
+  ;ui__clear CALL
+  ;colour_palette_ui #04 ;ui__set_colour_palette CALL
+ ( Draw non-interactive elements )
+  COL_0 ;fill_screen CALL
+  ;draw_tool_palette_background CALL
+ ( Register draw callbacks )
+  #00 ;tool_palette_screen__draw_tool_1
+  #01 ;tool_palette_screen__draw_tool_2
+  #02 ;tool_palette_screen__draw_tool_3
+  #03 ;tool_palette_screen__draw_tool_4
+  #04 ;tool_palette_screen__draw_tool_5
+  #05 ;tool_palette_screen__draw_tool_6
+  #06 ;tool_palette_screen__draw_tool_7
+  #07 ;tool_palette_screen__draw_tool_8
+  #08 ;ui__register_draw_callbacks CALL
+ ( Register controller callbacks )
+  #00 ;canvas_screen
+  #01 ;canvas_screen
+  #02 ;canvas_screen
+  #03 ;canvas_screen
+  #04 ;canvas_screen
+  #05 ;canvas_screen
+  #06 ;canvas_screen
+  #07 ;canvas_screen
+  #08 ;ui__register_go_callbacks CALL
+  ;canvas_screen
+  ;ui__register_B_callback CALL
+ ( Register mouse zones )
+  #00 ,tool_palette_screen__get_mouse_zone JSR
+  #01 ,tool_palette_screen__get_mouse_zone JSR
+  #02 ,tool_palette_screen__get_mouse_zone JSR
+  #03 ,tool_palette_screen__get_mouse_zone JSR
+  #04 ,tool_palette_screen__get_mouse_zone JSR
+  #05 ,tool_palette_screen__get_mouse_zone JSR
+  #06 ,tool_palette_screen__get_mouse_zone JSR
+  #07 ,tool_palette_screen__get_mouse_zone JSR
+  #08 ;ui__register_zones CALL
+ ( Finish callback registration )
+  /V.ACTIVE_TOOL? #08 HORIZONTAL ;ui__run GOTO
+@tool_palette_screen__get_mouse_zone        ( index -- index left* top* width* height* )
+  LITr 00 STHk /SCREEN.WIDTH?               ( index s_width* | index* )
+  ;get_tool_palette_width CALL              ( index s_width* width* | index* )
+  SUB* HALVE* ADD2*                         ( index zone_0_x* | index* )
+  STHr* #001a MUL* ADD*                     ( index left* )
+  #0018 CENTER_UP? #0017 DUP* RETURN        ( index left* top* width* height* )
+@tool_palette_screen__draw_tool_1           ( active? )
+  #00 ,tool_palette_screen__draw_tool JMP     ( -- )
+@tool_palette_screen__draw_tool_2           ( active? )
+  #01 ,tool_palette_screen__draw_tool JMP     ( -- )
+@tool_palette_screen__draw_tool_3           ( active? )
+  #02 ,tool_palette_screen__draw_tool JMP     ( -- )
+@tool_palette_screen__draw_tool_4           ( active? )
+  #03 ,tool_palette_screen__draw_tool JMP     ( -- )
+@tool_palette_screen__draw_tool_5           ( active? )
+  #04 ,tool_palette_screen__draw_tool JMP     ( -- )
+@tool_palette_screen__draw_tool_6           ( active? )
+  #05 ,tool_palette_screen__draw_tool JMP     ( -- )
+@tool_palette_screen__draw_tool_7           ( active? )
+  #06 ,tool_palette_screen__draw_tool JMP     ( -- )
+@tool_palette_screen__draw_tool_8           ( active? )
+  #07 ,tool_palette_screen__draw_tool JMP     ( -- )
+@tool_palette_screen__draw_tool             ( active? index -- )
+  SWP /I.ACTIVE_ELEMENT? /V.ACTIVE_TOOL!      ( index active? )
+  ;draw_tool_palette_icon CALL_RET            ( -- )
+
+
+@draw_tool_palette_icon                   ( index active? )
+  LITr 00 STHk* POP LITr 00 STH             ( | index* active index* )
+  #001a CENTER_UP! /SCREEN.WIDTH?           ( s_width* | index* active index* )
+  ;get_tool_palette_width CALL              ( s_width* width* | index* active index* )
+  SUB* HALVE* ADD2*                         ( zone_0_x* | index* active index* )
+  STHr* #001a MUL* ADD* /SCREEN.X!          ( | index* active )
+  STHr STHkr /V.ACTIVE_TOOL? EQU            ( active? current_tool? | index* )
+  COL_0 COL_2 CHOOSE COL_3 CHOOSE           ( colour | index* )
+  #0017 DUP* ;draw_capsule_smooth CALL      ( | index* )
+  COL_T1 ;tool_icon STHr* #0048 MUL* ADD*   ( colour 3x3_sprite_addr* )
+  ;draw_3x3_sprite CALL_RET
+
+( Draw a large capsule to use as a background for the tool icons )
+@draw_tool_palette_background             ( -- )
+  #001c CENTER_UP! COL_1                    ( -- )
+  ;get_tool_palette_width CALL              ( colour width* )
+  /SCREEN.WIDTH? OVR* SUB* HALVE*           ( colour width* bg_x* )
+  /SCREEN.X! #001b ;draw_capsule CALL_RET   ( -- )
+
+@get_tool_palette_width                   ( -- width* )
+  #0008 #001a MUL* INC* RETURN              ( width* )
+
+
+( Draw a 1-bit 3x3 sprite )
+@draw_3x3_sprite                          ( colour sprite_addr* -- )
+  /SCREEN.ADDR! #26 /SCREEN.AUTO!
+  /SCREEN.SPRITE DEOk DEOk DEO
+  #00 /SCREEN.AUTO! #0018 MOVE_UP
+  RETURN
+
+@recenter_canvas                          ( -- )
+  /SCREEN.WIDTH?  /V.CANVAS.WIDTH?  SUB* HALVE* /V.CANVAS.X!
+  /SCREEN.HEIGHT? /V.CANVAS.HEIGHT? SUB* HALVE* /V.CANVAS.Y!
   RETURN
 
 
-@draw_icon_button ( colour sprite_addr* -- )
-  >SCREEN.ADDR
-  DUP #02 SFT #000a #000a ;draw_capsule CALL
-  INC_X INC_Y
-  >SCREEN.SPRITE
-  DEC_X DEC_Y
+( Draws the standard dialog box background used in the menu screens.
+  0x86 by 0x64, or 0d134 by 0d100 )
+@draw_menu_background ( -- )
+  COL_0 ;fill_screen CALL
+ ( Draw awkward shadow corner )
+  #0040 CENTER_RIGHT! #002f CENTER_DOWN!
+  COL_2 #0004 DUP* ;draw_capsule CALL
+ ( Draw inner frame, straight lines )
+  #0040 CENTER_LEFT! #0032 CENTER_UP!
+  COL_1 #0080 ;draw_horizontal_line CALL
+  #0041 CENTER_LEFT! #0031 CENTER_DOWN!
+  COL_1 #0081 ;draw_horizontal_line CALL
+  #0043 CENTER_LEFT! #002f CENTER_UP!
+  COL_1 #005e ;draw_vertical_line CALL
+  #0042 CENTER_RIGHT! #0030 CENTER_UP!
+  COL_1 #005f ;draw_vertical_line CALL
+ ( Draw inner corners )
+  ;&corner /SCREEN.ADDR!
+  #0042 CENTER_LEFT! #0031 CENTER_UP!
+  COL_T1 /SCREEN.SPRITE!
+  #003a CENTER_RIGHT! ( #0031 CENTER_UP! )
+  COL_T1 AND_FLIPX /SCREEN.SPRITE!
+  #0042 CENTER_LEFT! #0029 CENTER_DOWN!
+  COL_T1 AND_FLIPY /SCREEN.SPRITE!
+  #003a CENTER_RIGHT! ( #0029 CENTER_DOWN! )
+  COL_T1 AND_FLIPX AND_FLIPY /SCREEN.SPRITE!
+ ( Draw drop shadow )
+  #0040 CENTER_LEFT! #0032 CENTER_DOWN!
+  COL_2 #0084 ;draw_horizontal_line CALL
+  #003e CENTER_LEFT! #0033 CENTER_DOWN!
+  COL_2 #0080 ;draw_horizontal_line CALL
+  #0043 CENTER_RIGHT! #002f CENTER_UP!
+  COL_2 #0061 ;draw_vertical_line CALL
+  #0044 CENTER_RIGHT! #002d CENTER_UP!
+  COL_2 #005e ;draw_vertical_line CALL_RET
+  &corner c080 0000 0000 0000
+
+( Draws the standard dialog box background used in the menu screens )
+@draw_menu_background_old ( -- )
+  COL_0 ;fill_screen CALL
+  #0041 CENTER_LEFT! #0031 CENTER_UP!
+  COL_1 #0082 #0062 ;draw_rect_outline CALL
+  #0043 CENTER_LEFT! #0033 CENTER_UP!
+  COL_2 #0086 #0066 ;draw_rect_outline CALL
   RETURN
 
 
+
+( ---------------------------------------------------------------------------- )
+(                U S E R   I N T E R F A C E   E L E M E N T S                 )
+
+( Draw a variable-width 11-high button with a centered text label )
+@draw_button                              ( sprite_colour width* text_addr* -- )
+  /SCREEN.X? STH* STH* STH*                 ( s_colour | startx* t_addr* width* )
+  DUP TO_PIXEL_COLOUR                       ( s_colour p_colour | startx* t_addr* width* )
+  STHkr* #000b ;draw_capsule CALL           ( s_colour | startx* t_addr* width* )
+ ( Draw text in center of button )
+  /SCREEN.Y? INC* INC* /SCREEN.Y!           ( s_colour | startx* t_addr* width* )
+  SWPr* STHr* STHr*                         ( s_colour t_addr* width* | startx* )
+  OVR* ;get_text_width CALL SUB* HALVE*      ( s_colour t_addr* t_x_offset* | startx* )
+  STHkr* ADD* /SCREEN.X! ;draw_text CALL    ( s_colour t_addr* | startx* )
+ ( Return pointer to initial position )
+  STHr* /SCREEN.X!                          ( -- )
+  /SCREEN.Y? #0002 SUB* /SCREEN.Y!          ( -- )
+  RETURN                                    ( -- )
+
+( Draw a 10x10 square button containing an 8x8 2-bit icon sprite )
+@draw_icon_button                         ( s_colour sprite_addr* -- )
+  /SCREEN.ADDR! DUP TO_PIXEL_COLOUR         ( s_colour p_colour )
+  #000a DUP* ;draw_capsule CALL             ( s_colour )
+  r/SCREEN.X? INCkr* r/SCREEN.X!            ( s_colour | startx* )
+  r/SCREEN.Y? INCkr* r/SCREEN.Y!            ( s_colour | startx* starty* )
+  /SCREEN.SPRITE!                           ( | startx* starty* )
+  r/SCREEN.Y! r/SCREEN.X! RETURN            ( -- )
+
+
+( Draw a two-option selector, 13-high. )
 @draw_toggle ( bg_colour fg_colour width* text_addr_1* text_addr_2* value -- )
-  !SCREEN.X ,&start_x STR2                   ( ... )
-  !SCREEN.Y ,&start_y STR2                   ( ... )
-  STH                                        ( ... | value )
-  ,&text_addr_2 STR2 ,&text_addr_1 STR2      ( bg fg width* | value )
-  DUP2 #0004 SUB2 #01 SFT2                   ( bg fg width* half_width* | value )
-  ,&half_width STR2                          ( bg fg width* | value )
-  DUP2 #0001 AND2 ,&spacer STR2              ( // more padding for odd widths )
-  ,&width STR2                               ( bg fg | value )
-  OVR STHr                                   ( bg fg bg value )
-  JMP SWP                                    ( bg fg bg // swap if value is 00 )
-  ,&left_colour STR ,&right_colour STR       ( bg )
-
-  #02 SFT [ LIT2 &width $2 ]                 ( pixel_colour* width* )
-  #000d ;draw_capsule CALL                   ( // draw the full background )
-  INC_X INC_Y
-  [ LIT &left_colour $1 ] ,&half_width LDR2
-  [ LIT2 &text_addr_1 $2 ] ;draw_button CALL
-  ,&half_width LDR2 #0002 ADD2 [ LIT2 &spacer $2 ] ADD2 ADD_X
-  [ LIT &right_colour $1 ] ,&half_width LDR2
-  [ LIT2 &text_addr_2 $2 ] ;draw_button CALL
-  [ LIT2 &start_x $2 ] [ LIT2 &start_y $2 ]
-  >SCREEN.Y >SCREEN.X
+ ( Store calculated values )
+  r/SCREEN.Y? r/SCREEN.X? STH               ( ... | y* x* val )
+  ,&text_addr_2 STR* ,&text_addr_1 STR*     ( bg fg width* | y* x* val )
+  DUP* #0004 SUB* HALVE* ,&half_width STR*  ( bg fg width* | y* x* val )
+  DUP* #0001 AND* ,&pad STR* ,&width STR*   ( bg fg | y* x* val )
+ ( Convert [<edge,inner> <active,text>] to [<edge,inner> <active,text> <inner,text>] )
+  SWPk #03 AND SHL2 SWP #03 AND ORA         ( bg active inactive | y* x* val )
+  STHr JMP SWP                              ( bg right left | y* x* )
+  ,&left_colour STR ,&right_colour STR      ( bg | y* x* )
+ ( Draw edge )
+  DUP SHR2 [ LIT* &width $2 ]               ( bg edge width* | y* x* )
+  #000d ;draw_capsule CALL                  ( bg | y* x* )
+ ( Draw inner fill )
+  MOVE_RIGHT_1 MOVE_DOWN_1                  ( bg | y* x* )
+  #03 AND ,&width LDR* #0002 SUB*           ( inner width* | y* x* )
+  #000b ;draw_capsule CALL                  ( | y* x* )
+ ( Draw left option )
+  [ LIT &left_colour $1 ] [ LIT* &half_width $2 ]
+  [ LIT* &text_addr_1 $2 ] ;draw_button CALL
+  ,&half_width LDR* ADD2* [ LIT* &pad $2 ] ADD* MOVE_RIGHT
+ ( Draw right option )
+  [ LIT &right_colour $1 ] ,&half_width LDR*
+  [ LIT* &text_addr_2 $2 ] ;draw_button CALL
+  r/SCREEN.X! r/SCREEN.Y!
   RETURN
-  &half_width $2
 
 
+( Draw a numeric input widget )
 @draw_numeric_input ( colour width* number* active -- )
-  !SCREEN.X ,&start_x STR2
-  STH STH2 STH2                                  ( colour | active number* width* )
-  DUP ,&colour STR STH2r                     ( colour width* | active number* )
-  DUP2 ,&width STR2 STH2r                    ( colour width* number* | active )
+  /SCREEN.X? ,&start_x STR*
+  STH STH* STH*                              ( colour | active number* width* )
+  DUP  ,&colour STR STHr*                    ( colour width* | active number* )
+  DUP* ,&width STR* STHr*                    ( colour width* number* | active )
   ;convert_short_to_decimal_string CALL      ( colour width* text_addr* | active )
   ;draw_button CALL                          ( -- | active )
   STHr JMP RETURN                            ( // return if inactive )
-  ;&arrow_sprite >SCREEN.ADDR
-  #0002 ADD_Y #0002 ADD_X                    ( // position cursor for left-arrow )
-  ,&colour LDR >SCREEN.SPRITE                ( // draw left arrow )
-  ,&width LDR2 #000c SUB2 ADD_X              ( // position cursor for right-arrow )
-  ,&colour LDR #10 ORA >SCREEN.SPRITE        ( // #10 is horizontal-flip )
-  [ LIT2 &start_x $2 ] >SCREEN.X
-  #0002 SUB_Y
+  ;sprite/left_chevron /SCREEN.ADDR!
+  #0002 MOVE_DOWN #0002 MOVE_RIGHT                    ( // position cursor for left-arrow )
+  ,&colour LDR /SCREEN.SPRITE!               ( // draw left arrow )
+  ,&width LDR* #000c SUB* MOVE_RIGHT              ( // position cursor for right-arrow )
+  ,&colour LDR AND_FLIPX /SCREEN.SPRITE!
+  [ LIT* &start_x $2 ] /SCREEN.X!
+  #0002 MOVE_UP
   RETURN
   &colour $1  &width $2
-  &arrow_sprite 1030 70f0 7030 1000
-
-
-( ------------------------------------------------------------------------------- )
-(                         I N P U T S   F R A M E W O R K                         )
-
-@inputs__draw_all                         ( -- )
-  ;inputs__data/total LDA                   ( total )
-  #00                                       ( total index )
-  &loop                                     ( total index )
-    EQUk ,&end JCN                          ( total index )
-    DUP ;inputs__draw_single CALL           ( total index )
-    INC ,&loop JMP                          ( total index )
-  &end                                      ( total index )
-    POP2 RETURN                             ( -- )
-
-@inputs__draw_single                      ( index -- )
-  DUP ;inputs__data/active LDA EQU SWP      ( is_active index )
-  ;inputs__callbacks/draw                   ( is_active index slot_addr* )
-  ,inputs__press JMP                        ( is_active index slot_addr* )
-@inputs__press_left                       ( index -- )
-  ;inputs__callbacks/left                   ( index slot_addr* )
-  ,inputs__press JMP                        ( index slot_addr* )
-@inputs__press_right                      ( index -- )
-  ;inputs__callbacks/right                  ( index slot_addr* )
-  ,inputs__press JMP                        ( index slot_addr* )
-@inputs__press_A                          ( index -- )
-  ;inputs__callbacks/A                      ( index slot_addr* )
-  ,inputs__press JMP                        ( index slot_addr* )
-@inputs__press                            ( index slot_addr* )
-  ROT DOUBLE #00 SWP                        ( slot_addr* offset* )
-  ADD2 LDA2 CALL RETURN                     ( -- )
-
-@inputs__register_draw_callbacks          ( [index callback*]+ total -- )
-  ;inputs__callbacks/draw                   ( [index callback*]+ total slot_addr* )
-  ,inputs__register_callbacks JMP           ( [index callback*]+ total slot_addr* )
-@inputs__register_left_callbacks          ( [index callback*]+ total -- )
-  ;inputs__callbacks/left                   ( [index callback*]+ total slot_addr* )
-  ,inputs__register_callbacks JMP           ( [index callback*]+ total slot_addr* )
-@inputs__register_right_callbacks         ( [index callback*]+ total -- )
-  ;inputs__callbacks/right                  ( [index callback*]+ total slot_addr* )
-  ,inputs__register_callbacks JMP           ( [index callback*]+ total slot_addr* )
-@inputs__register_A_callbacks             ( [index callback*]+ total -- )
-  ;inputs__callbacks/A                      ( [index callback*]+ total slot_addr* )
-  ,inputs__register_callbacks JMP           ( [index callback*]+ total slot_addr* )
-@inputs__register_callbacks               ( [index callback*]+ total slot_addr* -- )
-  ,&slot_addr STR2                          ( [index callback*]+ total )
-  &loop                                     ( [index callback*]+ total )
-    STH ROT                                 ( callback* index | total )
-    DOUBLE #00 SWP                          ( callback* offset* | total )
-    LIT2 &slot_addr $2                      ( callback* offset* slot_addr* | total )
-    ADD2 STA2                               ( | total )
-    STHr DEC DUP
-    ,&loop JCN
-  POP RETURN
-
-@inputs__setup                            ( active total -- )
-  ;inputs__data/total STA                   ( active )
-  DUP                                       ( active active )
-  ;inputs__data/active STA                  ( active )
-  ;inputs__data/prev_active STA             ( -- )
-  #00 ;inputs__draw_single CALL
-  ;inputs__draw_all CALL
-  ;inputs__on_controller >CONTROLLER.VECTOR
-  BRK
-
-@inputs__clear_callbacks                  ( -- )
-  LIT RETURN DUP                            ( op* )
-  ;inputs__callbacks_end                    ( op* end_addr* )
-  ;inputs__callbacks                        ( op* end_addr* start_addr* )
-  &loop                                     ( op* end_addr* addr* )
-    ROT2 SWP2                               ( end_addr* op* addr* )
-    STA2k ROT2 SWP2                         ( op* end_addr* addr* )
-    INC2 INC2 LTH2k ,&loop JCN              ( op* end_addr* addr* )
-  POP2 POP2 POP2 RETURN                     ( -- )
-
-
-@inputs__on_controller
-  ;update_button_states CALL
-  !IS_UP_PRESSED ,&up JCN
-  !IS_DOWN_PRESSED ,&down JCN
-  !IS_LEFT_PRESSED ,&left JCN
-  !IS_RIGHT_PRESSED ,&right JCN
-  !IS_A_PRESSED ,&A JCN
-  BRK
-  &up
-    ;reset_scheme_counter CALL
-    ;inputs__data/active LDA                ( active )
-    DUP #00 EQU ,&break JCN                   ( // break if active==0 )
-    DEC ;inputs__data/active STA
-    ,&redraw_inputs JMP
-  &down
-    ;reset_scheme_counter CALL
-    ;inputs__data/active LDA                ( active )
-    DUP INC ;inputs__data/total LDA EQU     ( active is_max )
-    ,&break JCN                               ( // break if active==total-1 )
-    INC ;inputs__data/active STA
-    ,&redraw_inputs JMP
-  &break
-    POP BRK
-  &left
-    ;inputs__data/active LDA                ( active )
-    DUP ;inputs__press_left CALL            ( active )
-    ;inputs__draw_single CALL BRK           ( -- )
-  &right
-    ;inputs__data/active LDA                ( active )
-    DUP ;inputs__press_right CALL           ( active )
-    ;inputs__draw_single CALL BRK           ( -- )
-  &A
-    ;inputs__data/active LDA                ( active )
-    ;inputs__press_A CALL BRK               ( -- )
-  &redraw_inputs
-    ;inputs__data/prev_active LDA           ( prev_active )
-    ;inputs__data/active LDA                ( prev_active active )
-    NEQk #02 JCN POP2 BRK                   ( // end if active is unchanged )
-    DUP ;inputs__draw_single CALL           ( // draw active input )
-    SWP ;inputs__draw_single CALL           ( // draw prev_active input )
-    ;inputs__data/prev_active STA           ( // prev_active=active )
-    BRK
-
-@inputs__data
-  &prev_active $1
-  &active $1
-  &total $1
-@inputs__callbacks
-  &draw $16
-  &left $16
-  &right $16
-  &A $16
-&_pad $2
-@inputs__callbacks_end
 
 
 
-
-( ------------------------------------------------------------------------------- )
-(                         D R A W I N G   R O U T I N E S                         )
+( ---------------------------------------------------------------------------- )
+(                    D R A W I N G   S U B R O U T I N E S                     )
 
 @set_colours ( red* green* blue* -- )
-  SYSTEM.BLUE DEO2
-  SYSTEM.GREEN DEO2
-  SYSTEM.RED DEO2
+  /SYSTEM.BLUE! /SYSTEM.GREEN! /SYSTEM.RED!
   RETURN
 
+( Load a colour palette stored in program memory )
+@load_colour_palette ( colour_palette_addr* -- )
+  LDAk* SWP* INC* INC*
+  LDAk* SWP* INC* INC*
+  LDA* ;set_colours GOTO
 
-@load_colours ( colour_scheme_addr* -- )
-  LDA2k SWP2 INC2 INC2
-  LDA2k SWP2 INC2 INC2
-  LDA2 ;set_colours CALL
-  RETURN
 
 
-@fill_screen ( colour -- )
-  #20 SFT                                   ( // pixel colour to sprite colour )
-  #0000 DUP2 >SCREEN.X >SCREEN.Y            ( colour )
-  ;&blank_sprite >SCREEN.ADDR               ( colour )
-  &loop                                     ( colour )
-    DUP >SCREEN.SPRITE                      ( colour )
-    !SCREEN.X #0008 ADD2                    ( colour x* )
-    DUP2 >SCREEN.X                          ( colour x* )
-    !SCREEN.WIDTH LTH2                      ( colour is_line_incomplete )
+@fill_foreground                          ( pixel_colour -- )
+  TO_SPRITE_COLOUR AND_FG ;sprite/blank
+  ;fill_screen_with_sprite GOTO
+( Fill the screen with one solid colour )
+@fill_screen                              ( pixel_colour -- )
+  TO_SPRITE_COLOUR ;sprite/blank            ( s_colour )
+@fill_screen_with_sprite                  ( s_colour sprite_addr* -- )
+  /SCREEN.ADDR!                             ( s_colour )
+  #0000 DUP* /SCREEN.X! /SCREEN.Y!          ( s_colour )
+  #f1 /SCREEN.AUTO!                         ( s_colour )
+  &loop                                     ( s_colour )
+    DUP /SCREEN.SPRITE!                     ( s_colour )
+    /SCREEN.X? /SCREEN.WIDTH? LTH*          ( s_colour is_line_incomplete )
     ,&loop JCN                              ( colour )
   &next_line                                ( colour )
-    #0000 >SCREEN.X                         ( colour )
-    !SCREEN.Y #0008 ADD2                    ( colour y* )
-    DUP2 >SCREEN.Y                          ( colour y* )
-    !SCREEN.HEIGHT LTH2                     ( colour is_screen_incomplete )
+    #0000 /SCREEN.X!                        ( colour )
+    /SCREEN.Y? #0008 ADD*                   ( colour y* )
+    DUP* /SCREEN.Y!                         ( colour y* )
+    /SCREEN.HEIGHT? LTH*                    ( colour is_screen_incomplete )
     ,&loop JCN
-  POP RETURN
-  &blank_sprite 0000 0000 0000 0000
+  #00 /SCREEN.AUTO! POP RETURN
 
-
-@draw_line ( colour x0* y0* x1* y1* -- )
-  ,&y1 STR2 ,&x1 STR2                        ( colour x0* y0* )
-  DUP2 ,&y0 STR2 >SCREEN.Y                   ( colour x0* )
-  DUP2 ,&x0 STR2 >SCREEN.X                   ( colour )
-  ,&colour STR                               ( -- )
-  ,&x1 LDR2 [ LIT2 &x0 $2 ] SUB2             ( dx* )
-  [ LIT2 &y1 $2 ]  [ LIT2 &y0 $2 ]  SUB2     ( dx* dy* )
-  DUP2 ISPOS2                                ( dx* dy* is_dy_zero_or_greater )
-  ,&dy_zero_or_greater JCN                   ( dx* dy* )
-
-  &dy_is_negative
-    #ffff ,&yi STR2                          ( dx* dy* )
-    NEG2                                     ( dx* -dy* )
-    ,&start_cont JMP
-  &dy_zero_or_greater
-    #0001 ,&yi STR2                          ( dx* dy* )
-  &start_cont
-    OVR2 ,&dx STR2 DUP2 ,&dy STR2            ( // store dx and dy )
-    DOUBLE2 SWP2 SUB2                        ( D* )
-    ,&loop JMP
-      &x1 $2  &dx $2  &dy $2
-
-  &loop
-    [ LIT &colour $1 ]  >SCREEN.PIXEL        ( D* )
-    DUP2 DEC2 ISNEG2                         ( D* is_d_less_or_equal_zero )
-    ,&d_less_or_equal_zero JCN               ( D* )
-  &d_greater_than_zero
-    !SCREEN.Y  [ LIT2 &yi 0001 ]             ( D* y* yi* )
-    ADD2 >SCREEN.Y                           ( D*  // increment y )
-    ,&dy LDR2 ,&dx LDR2 SUB2                 ( D* dy-dx* )
-    DOUBLE2 ADD2                             ( D*  // D+=2*(dy-dx) )
-    ,&increment_x_and_check_if_done JMP      ( D* )
-  &d_less_or_equal_zero
-    ,&dy LDR2 DOUBLE2 ADD2                   ( D* // D+=2*dy )
-  &increment_x_and_check_if_done
-    !SCREEN.X DUP2 INC2                      ( D* x* x+1* )
-    >SCREEN.X ,&x1 LDR2 LTH2                 ( D* is_line_complete // increment x )
-    ,&loop JCN                               ( D* )
-  POP2 RETURN
-
-
-@draw_rect ( colour width* height* -- )
-  !SCREEN.Y DUP2 ,&start_y STR2              ( colour width* height* y* )
-  ADD2 DEC2 ,&target_y STR2                  ( colour width* )
-  STH2 DUP ,&colour STR STH2r                ( colour width* )
-  DUP2 ,&width STR2                          ( colour width* )
-  ;draw_horizontal_line CALL                 ( // draw the top line )
-  INC_Y ,&colour LDR                         ( colour // move to next line )
-  &loop
-    DUP >SCREEN.PIXEL                        ( // draw the left wall )
-    !SCREEN.X ,&width LDR2 ADD2 DEC2 >SCREEN.X   ( colour  // move to right wall )
-    DUP >SCREEN.PIXEL                        ( // draw the right wall )
-    !SCREEN.X ,&width LDR2 SUB2 INC2 >SCREEN.X   ( colour // move to left wall )
-    !SCREEN.Y INC2 DUP2 >SCREEN.Y            ( y* )
-    [ LIT2 &target_y $2 ]                    ( y* target_y* )
-    NEQ2 ,&loop JCN                          ( -- )
-  ,&width LDR2 ;draw_horizontal_line CALL    ( // draw the bottom line )
-  [ LIT2 &start_y $2 ] >SCREEN.Y
-  RETURN
-  &colour $1
-  &width $2
-
-
-@draw_filled_rect ( colour width* height* -- )
-  !SCREEN.Y DUP2 ,&start_y STR2              ( colour width* height* y* )
-  ADD2 ,&target_y STR2                       ( colour width* )
-  ,&width STR2 ,&colour STR                  ( -- )
-  &loop
-    [ LIT &colour $1 ]
-    [ LIT2 &width $2 ]
-    ;draw_horizontal_line CALL
-    !SCREEN.Y INC2 DUP2 >SCREEN.Y            ( y* )
-    [ LIT2 &target_y $2 ]                    ( y* target_y* )
-    NEQ2 ,&loop JCN                          ( -- )
-  [ LIT2 &start_y $2 ] >SCREEN.Y
-  RETURN
-
-
-@draw_horizontal_line ( colour width* -- )
-  SCREEN.X ,__draw_line/mode STR
-  ,__draw_line JSR RETURN
-@draw_vertical_line ( colour height* -- )
-  SCREEN.Y ,__draw_line/mode STR
-  ,__draw_line JSR RETURN
-@__draw_line ( colour length* -- )
-  ROT DUP SWP2                               ( colour* length* )
-  [ ,&mode LDR ] DEI2 DUP2 ,&start STR2      ( colour* length* coord* )
-  DUP2 ROT2 ADD2 SWP2                        ( colour* target* start* )
-  &loop
-    ROT2 DUP >SCREEN.PIXEL ROT2 ROT2         ( // draw a pixel )
-    INC2 DUP2 [ ,&mode LDR ] DEO2            ( colour* target* coord* )
-    NEQ2k ,&loop JCN                         ( colour* target* coord* )
-  POP2 POP2 POP2                             ( -- )
-  ,&start LDR2 [ ,&mode LDR ] DEO2           ( // reset coord to starting value )
-  RETURN
-  &mode $1
-  &start $2
-
-
-@draw_text ( colour text_addr* -- )
-  ROT ,&colour STR                           ( text_addr* )
-  !SCREEN.X ,&start_x STR2                   ( text_addr* )
-  &loop
-    DUP2 LDA                                 ( text_addr* ascii )
-    DUP ,&render JCN                         ( text_addr* ascii )
-  &end
-    POP POP2                                 ( -- )
-    [ LIT2 &start_x $2 ] >SCREEN.X           ( // move x back to start )
+( Draw a rectange outline. Width and height must not be zero. )
+@draw_rect_outline                        ( colour width* height* )
+  /SCREEN.X? ,&startx STR*
+  /SCREEN.Y? ,&starty STR*
+  STH* STH* DUP #0001 SWP* STHkr*           ( 1* colour* width* | height* width* )
+  ;draw_horizontal_line CALL                ( 1* colour | height* width* )
+  DUP OVR* OVRr* STHr* ,&reset JSR          ( 1* colour* | height* width* )
+  STHkr* ;draw_horizontal_line CALL         ( 1* colour | height* width* )
+  DUP OVR* STHr* SWP* ,&reset JSR           ( 1* colour* | height* )
+  STHkr* ;draw_vertical_line CALL           ( 1* colour | height* )
+  DUP OVR* DUP* ,&reset JSR                 ( 1* colour* | height* )
+  POP STHr* ;draw_vertical_line CALL        ( -- )
+  DUP* ,&reset JMP
+  &reset
+    LIT* &starty $2 ADD* DEC* /SCREEN.Y!
+    LIT* &startx $2 ADD* DEC* /SCREEN.X!
     RETURN
+
+( Draw a solid rectange. Width and height must not be zero. )
+@draw_rect_filled                         ( colour width* height* )
+  STH* ,&width STR* ,&colour STR STHr*      ( height* )
+  /SCREEN.Y? DUP* ROT* ADD* SWP*             ( target* starty* )
+  r/SCREEN.Y DEIkr* ROTr                       ( target* starty* | startx* port )
+  &loop                                   ( target* y* | startx* port )
+    [ LIT &colour $1 LIT* &width $2 ]       ( target* y* colour width* | startx* port )
+    ;draw_horizontal_line CALL              ( target* y* | startx* port )
+    INC* DUP* /SCREEN.Y!                     ( target* y+1* | startx* port )
+    NEQk* ,&loop JCN                        ( target* y* | startx* port )
+  &end                                    ( target* y* | startx* port )
+    POP* POP* DEOr* RETURN                  ( -- )
+
+( Draw a horizontal or vertical line. Line length must not be zero. )
+@draw_vertical_line #2a02 INCk JMP        ( colour height* -- )
+@draw_horizontal_line #2801                 ( colour width* -- )
+@__draw_line                              ( colour len* axis auto )
+  /SCREEN.AUTO! STH DEIkr* ROTr             ( colour len* axis | start* axis )
+  &loop                                   ( colour len* | start* axis )
+    ROTk /SCREEN.PIXEL! POP*                ( colour len* | start* axis )
+    DEC* DUP* #0000 NEQ* ,&loop JCN         ( colour len-1* | start* axis )
+  &end                                    ( colour len* | start* axis )
+    DEOr* /SCREEN.AUTO! POP* RETURN         ( -- )
+
+( Draw proportional text )
+@draw_text                                ( colour text_addr* -- )
+  ROT ,&colour STR                          ( t_addr* )
+  r/SCREEN.X DEIkr* ROTr                    ( t_addr* | x* axis )
+  &loop                                   ( t_addr* | x* axis )
+    LDAk DUP ,&render JCN                   ( t_addr* ascii | x* axis )
+    POP POP* DEOr* RETURN                   ( -- )
   &render
-    #20 SUB #00 SWP                          ( text_addr* char_code* )
-    DUP2 #30 SFT2                            ( text_addr* char_code* char_offset* )
-    ;acorn_font/characters ADD2              ( text_addr* char_code* char_addr* )
-    >SCREEN.ADDR                             ( text_addr* char_code* )
-    [ LIT &colour $1 ]  >SCREEN.SPRITE       ( text_addr* char_code* )
-    ;acorn_font/width ADD2                   ( text_addr* width_addr* )
-    LDA #00 SWP                              ( text_addr* char_width* )
-    !SCREEN.X ADD2 >SCREEN.X                 ( text_addr* // move x along )
-    INC2                                     ( text_addr* )
-    ,&loop JMP
+    ASCII_TO_CODE TO_SHORT DUP* MUL8*       ( t_addr* code* code8* | x* axis )
+    ;acorn_font/characters ADD*             ( t_addr* code* sprite* | x* axis )
+    /SCREEN.ADDR!                           ( t_addr* code* | x* axis )
+    [ LIT &colour $1 ]  /SCREEN.SPRITE!     ( t_addr* code* | x* axis )
+    ;acorn_font/width ADD* LDA TO_SHORT     ( t_addr* char_width* | x* axis )
+    /SCREEN.X? ADD* /SCREEN.X!              ( t_addr* | x* axis )
+    INC* ,&loop JMP                         ( t_addr* | x* axis )
+
+@get_text_width                           ( text_addr* -- width* )
+  #0000 SWP*                                ( width* t_addr* )
+  &loop                                   ( width* t_addr* )
+    LDAk DUP ,&cont JCN                     ( width* t_addr* ascii )
+  &end                                    ( width* t_addr* ascii )
+    POP POP* RETURN                         ( width* )
+  &cont                                   ( width* t_addr* ascii )
+    ASCII_TO_CODE TO_SHORT                  ( width* t_addr* code* )
+    ;acorn_font/width ADD* LDA TO_SHORT     ( width* t_addr* char_width* )
+    ROT* ADD* SWP* INC* ,&loop JMP          ( width* t_addr* )
 
 
-@get_text_width ( text_addr* -- width* )
-  #0000                                      ( text_addr* width* )
-  &loop
-    OVR2 LDA                                 ( text_addr* width* ascii )
-    DUP ,&cont JCN                           ( text_addr* width* ascii )
-  &end
-    POP NIP2 RETURN
-  &cont
-    #20 SUB #00 SWP                          ( text_addr* width* char_code* )
-    ;acorn_font/width ADD2                   ( text_addr* width* width_addr* )
-    LDA #00 SWP                              ( text_addr* width* char_width* )
-    ADD2                                     ( text_addr* width* )
-    SWP2 INC2 SWP2                           ( text_addr* width* )
-    ,&loop JMP
+@draw_capsule                             ( colour width* height* )
+  r/SCREEN.X? r/SCREEN.Y?                   ( c w* h* | x* y* )
+  INCkr* r/SCREEN.Y!                        ( c w* h* | x* y* )
+ ( Draw wider rectangle )
+  STH* STH* DUP STHkr* OVRr* STHr*          ( c c w* h-2* | x* y* h* w* )
+  #0002 SUB* ;draw_rect_filled CALL         ( c | x* y* h* w* )
+ ( Draw taller rectangle )
+  STHr* #0002 SUB* STHr*                    ( c w-2* h* | x* y* )
+  SWPkr* INCr* r/SCREEN.X! r/SCREEN.Y!      ( c w-2* h* | x* y* )
+  ;draw_rect_outline CALL                   ( | x* y* )
+ ( Clear stacks )
+  r/SCREEN.Y! r/SCREEN.X! RETURN            ( -- )
+
+@draw_capsule_smooth                      ( colour width* height* )
+  r/SCREEN.X? r/SCREEN.Y? SWPkr*            ( c w* h* | sx* sy* sy* sx* )
+  INCr* r/SCREEN.X! INCr* r/SCREEN.Y!       ( c w* h* | sx* sy* )
+ ( Draw inner rectangle )
+  STH* STH* DUPk                            ( c c c | sx* sy* h* w* )
+  STHkr* #0002 SUB* OVRr* STHr* #0002 SUB*  ( c c c w-2* h-2* | sx* sy* h* w* )
+  ;draw_rect_filled CALL                    ( c c | sx* sy* h* w* )
+ ( Draw wider rectangle )
+  #0001 INCk* MOVE_DOWN MOVE_LEFT
+  STHkr* OVRr* STHr* #0006 SUB*             ( c c w* h-6* | sx* sy* h* w* )
+  ;draw_rect_outline CALL                   ( c | sx* sy* h* w* )
+ ( Draw taller rectangle )
+  #0003 DUP* MOVE_RIGHT MOVE_UP
+  STHr* #0006 SUB* STHr*                    ( c w-6* h* | sx* sy* )
+  ;draw_rect_outline CALL                   ( | sx* sy* )
+ ( Clear stacks )
+  r/SCREEN.Y! r/SCREEN.X! RETURN            ( -- )
 
 
-@draw_capsule ( colour width* height* -- )
-  !SCREEN.Y ,&start_y STR2
-  NIP #02 SUB ROT ROT                        ( colour counter width* )
-  DUP2 ,&width STR2                          ( colour counter width* )
-  #0002 SUB2 ,&short_width STR2              ( colour counter )
-  &loop
-    INC_Y                                    ( colour counter // move to next line )
-    SWP DUP [ LIT2 &width $2 ]               ( counter colour colour width* )
-    ;draw_horizontal_line CALL SWP           ( colour counter )
-    DEC DUP ,&loop JCN                       ( colour counter )
-  POP INC_X INC_Y                            ( colour // move to bottom line )
-  DUP [ LIT2 &short_width $2 ]               ( colour colour short_width* )
-  OVR2 OVR2 ROT POP                          ( colour colour short_width* colour short_width* )
-  ;draw_horizontal_line CALL                 ( colour colour short_width* // draw bottom line )
-  [ LIT2 &start_y $2 ]  >SCREEN.Y            ( colour colour short_width* // move to top line )
-  ;draw_horizontal_line CALL                 ( colour // draw top line )
-  POP DEC_X                                  ( -- // return to start )
-  RETURN
+
+( ---------------------------------------------------------------------------- )
+(                                   D A T A                                    )
 
 
-@draw_1bit_buffer ( addr* )
-  !SCREEN.X ,&start_x STR2
-  !SCREEN.Y ,&start_y STR2
-  #0000                                      ( addr* offset* )
-  &next_byte
-    ADD2k LDA #80                            ( addr* offset* byte mask )
-  &draw_byte
-    ANDk EQUk NIP >SCREEN.PIXEL              ( // draw pixel if bit is on )
-    !SCREEN.X INC2 DUP2 >SCREEN.X            ( addr* offset* byte mask x* )
-    ,&start_x LDR2 SUB2                      ( addr* offset* byte mask x_offset* )
-    !canvas_width LTH2                       ( addr* offset* byte mask is_line_incomplete )
-    ,&draw_byte_cont JCN                     ( addr* offset* byte mask )
-  &next_line
-    !SCREEN.X !canvas_width SUB2 >SCREEN.X   ( addr* offset* byte mask )
-    !SCREEN.Y INC2 DUP2 >SCREEN.Y            ( addr* offset* byte mask y* )
-    ,&start_y LDR2 SUB2                      ( addr* offset* byte mask y_offset* )
-    !canvas_height LTH2                      ( addr* offset* byte mask is_buffer_incomplete )
-    ,&draw_byte_cont JCN                     ( addr* offset* byte mask )
-    POP2 POP2 POP2 RETURN                    ( -- )
-  &draw_byte_cont
-    HALF2                                    ( addr* offset* byte mask )
-    DUP ,&draw_byte JCN                      ( addr* offset* byte mask )
-    POP2 INC2                                ( addr* offset* )
-    ,&next_byte JMP
-  &start_x $2
-  &start_y $2
+( b&w )
+@colour_palette_canvas
+  e17a e17a e17a
+  e179 e179 e179
+  e178 e178 e178
+  e179 e179 e179
 
-( ------------------------------------------------------------------------------- )
-(                                     D A T A                                     )
+( graphics calculator )
+@colour_palette_gfx
+  0e26 1e8b 2946
+  0e24 1e89 2945
+  0e22 1e88 2944
+  0e24 1e89 2945
 
-@colour_scheme_1_old
-  f025 e189 a246
-  f023 e188 a245
-  f022 e188 a244
-  f023 e188 a245
-
-@colour_scheme_1
-  f028 e18b a248
-  f024 e189 a246
-  f022 e188 a244
-  f024 e189 a246
-
-
+( tungsten )
+@colour_palette_ui
+  1d9b 1613 1011
+  1d9a 1612 1011
+  1d99 1611 1011
+  1d9a 1612 1011
+( ea0 for a nice yellow for col3 )
 
 @acorn_font
   &width
-0405 0408 0807 0802
-0505 0807 0405 0307
-0705 0707 0707 0707
-0707 0304 0605 0607
-0707 0707 0706 0607
-0705 0707 0608 0807
-0707 0707 0707 0708
-0707 0705 0705 0706
-0407 0707 0707 0607
-0705 0507 0508 0707
-0708 0707 0607 0708
-0707 0705 0205 0808 
+0405 0408 0807 0802  0505 0807 0405 0307
+0705 0707 0707 0707  0707 0304 0605 0607
+0707 0707 0706 0607  0705 0707 0608 0807
+0707 0707 0707 0708  0707 0705 0705 0706
+0407 0707 0707 0607  0705 0507 0508 0707
+0708 0707 0607 0708  0707 0705 0205 0808
   &characters
-0000 0000 0000 0000  (   )
-60f0 f060 6000 6000  ( ! )
-a0a0 0000 0000 0000  ( " )
-6c6c fe6c fe6c 6c00  ( # )
-107c e07c 0e7c 1000  ( $ )
-cccc 1830 60cc cc00  ( % )
-70d8 d870 dacc 7600  ( & )
-8080 0000 0000 0000  ( ' )
-3060 c0c0 c060 3000  ( ( )
-c060 3030 3060 c000  ( ) )
-6c38 fe38 6c00 0000  ( * )
-0030 30fc 3030 0000  ( + )
-0000 0000 0060 60c0  ( , )
-0000 00f0 0000 0000  ( - )
-0000 0000 00c0 c000  ( . )
-0c18 1830 3060 60c0  ( / )
-78cc dcfc eccc 7800  ( 0 )
-60e0 6060 6060 f000  ( 1 )
-78cc 0c38 60c4 fc00  ( 2 )
-78cc 0c38 0ccc 7800  ( 3 )
-1838 78d8 fc18 1800  ( 4 )
-fcc0 f81c 0ccc 7800  ( 5 )
-3860 c0f8 cccc 7800  ( 6 )
-fc0c 1830 6060 6000  ( 7 )
-78cc cc78 cccc 7800  ( 8 )
-78cc cc7c 0c18 7000  ( 9 )
-00c0 c000 00c0 c000  ( : )
-0060 6000 0060 60c0  ( ; )
-1830 60c0 6030 1800  ( < )
-0000 f000 f000 0000  ( = )
-c060 3018 3060 c000  ( > )
-78cc 1830 3000 3000  ( ? )
-78cc dcd4 dcc0 7800  ( @ )
-78cc cccc fccc cc00  ( A )
-f8cc ccf8 cccc f800  ( B )
-78cc c0c0 c0cc 7800  ( C )
-f8cc cccc cccc f800  ( D )
-f8c0 c0f0 c0c0 f800  ( E )
-f8c0 c0f0 c0c0 c000  ( F )
-78cc c0dc cccc 7800  ( G )
-cccc ccfc cccc cc00  ( H )
-f060 6060 6060 f000  ( I )
-7c18 1818 18d8 7000  ( J )
-cccc d8f0 d8cc cc00  ( K )
-c0c0 c0c0 c0c0 f800  ( L )
-c6ee fed6 d6c6 c600  ( M )
-c6e6 f6de cec6 c600  ( N )
-78cc cccc cccc 7800  ( O )
-f8cc cccc f8c0 c000  ( P )
-78cc cccc d4d8 6c00  ( Q )
-f8cc ccf8 cccc cc00  ( R )
-78cc c078 0ccc 7800  ( S )
-fc30 3030 3030 3000  ( T )
-cccc cccc cccc 7800  ( U )
-cccc cccc cc78 3000  ( V )
-c6c6 c6d6 d6fe 6c00  ( W )
-cccc 7830 78cc cc00  ( X )
-cccc cc78 3030 3000  ( Y )
-fc1c 3830 70e0 fc00  ( Z )
-f0c0 c0c0 c0c0 f000  ( [ )
-c060 6030 3018 180c  ( \ )
-f030 3030 3030 f000  ( ] )
-3071 cc84 0000 0000  ( ^ )
-0000 0000 0000 f800  ( _ )
-c060 0000 0000 0000  ( ` )
-0000 780c 7ccc 7c00  ( a )
-c0c0 f8cc cccc f800  ( b )
-0000 78cc c0cc 7800  ( c )
-0c0c 7ccc cccc 7c00  ( d )
-0000 78cc fcc0 7800  ( e )
-3860 60f8 6060 6000  ( f )
-0000 7ccc cc7c 0c78  ( g )
-c0c0 f8cc cccc cc00  ( h )
-6000 e060 6060 f000  ( i )
-3000 7030 3030 30e0  ( j )
-c0c0 ccd8 f0d8 cc00  ( k )
-e060 6060 6060 f000  ( l )
-0000 6cfe d6d6 c600  ( m )
-0000 f8cc cccc cc00  ( n )
-0000 78cc cccc 7800  ( o )
-0000 f8cc ccf8 c0c0  ( p )
-0000 7ccc cc7c 0c0e  ( q )
-0000 d8ec c0c0 c000  ( r )
-0000 7ce0 781c f800  ( s )
-6060 f860 6060 3800  ( t )
-0000 cccc cccc 7800  ( u )
-0000 cccc cc78 3000  ( v )
-0000 c6d6 d6fe 6c00  ( w )
-0000 cc78 3078 cc00  ( x )
-0000 cccc cc7c 0c78  ( y )
-0000 fc18 3060 fc00  ( z )
-3060 60c0 6060 3000  ( { )
-8080 8080 8080 8000  ( | )
-c060 6030 6060 c000  ( } )
+0000 0000 0000 0000  (   )        60f0 f060 6000 6000  ( ! )
+a0a0 0000 0000 0000  ( " )        6c6c fe6c fe6c 6c00  ( # )
+107c e07c 0e7c 1000  ( $ )        cccc 1830 60cc cc00  ( % )
+70d8 d870 dacc 7600  ( & )        8080 0000 0000 0000  ( ' )
+3060 c0c0 c060 3000  ( o_paren )  c060 3030 3060 c000  ( c_paren )
+6c38 fe38 6c00 0000  ( * )        0030 30fc 3030 0000  ( + )
+0000 0000 0060 60c0  ( , )        0000 00f0 0000 0000  ( - )
+0000 0000 00c0 c000  ( . )        0c18 1830 3060 60c0  ( / )
+78cc dcfc eccc 7800  ( 0 )        60e0 6060 6060 f000  ( 1 )
+78cc 0c38 60c4 fc00  ( 2 )        78cc 0c38 0ccc 7800  ( 3 )
+1838 78d8 fc18 1800  ( 4 )        fcc0 f81c 0ccc 7800  ( 5 )
+3860 c0f8 cccc 7800  ( 6 )        fc0c 1830 6060 6000  ( 7 )
+78cc cc78 cccc 7800  ( 8 )        78cc cc7c 0c18 7000  ( 9 )
+00c0 c000 00c0 c000  ( : )        0060 6000 0060 60c0  ( ; )
+1830 60c0 6030 1800  ( < )        0000 f000 f000 0000  ( = )
+c060 3018 3060 c000  ( > )        78cc 1830 3000 3000  ( ? )
+78cc dcd4 dcc0 7800  ( @ )        78cc cccc fccc cc00  ( A )
+f8cc ccf8 cccc f800  ( B )        78cc c0c0 c0cc 7800  ( C )
+f8cc cccc cccc f800  ( D )        f8c0 c0f0 c0c0 f800  ( E )
+f8c0 c0f0 c0c0 c000  ( F )        78cc c0dc cccc 7800  ( G )
+cccc ccfc cccc cc00  ( H )        f060 6060 6060 f000  ( I )
+7c18 1818 18d8 7000  ( J )        cccc d8f0 d8cc cc00  ( K )
+c0c0 c0c0 c0c0 f800  ( L )        c6ee fed6 d6c6 c600  ( M )
+c6e6 f6de cec6 c600  ( N )        78cc cccc cccc 7800  ( O )
+f8cc cccc f8c0 c000  ( P )        78cc cccc d4d8 6c00  ( Q )
+f8cc ccf8 cccc cc00  ( R )        78cc c078 0ccc 7800  ( S )
+fc30 3030 3030 3000  ( T )        cccc cccc cccc 7800  ( U )
+cccc cccc cc78 3000  ( V )        c6c6 c6d6 d6fe 6c00  ( W )
+cccc 7830 78cc cc00  ( X )        cccc cc78 3030 3000  ( Y )
+fc1c 3830 70e0 fc00  ( Z )        f0c0 c0c0 c0c0 f000  ( [ )
+c060 6030 3018 180c  ( \ )        f030 3030 3030 f000  ( ] )
+3071 cc84 0000 0000  ( ^ )        0000 0000 0000 f800  ( _ )
+c060 0000 0000 0000  ( ` )        0000 780c 7ccc 7c00  ( a )
+c0c0 f8cc cccc f800  ( b )        0000 78cc c0cc 7800  ( c )
+0c0c 7ccc cccc 7c00  ( d )        0000 78cc fcc0 7800  ( e )
+3860 60f8 6060 6000  ( f )        0000 7ccc cc7c 0c78  ( g )
+c0c0 f8cc cccc cc00  ( h )        6000 e060 6060 f000  ( i )
+3000 7030 3030 30e0  ( j )        c0c0 ccd8 f0d8 cc00  ( k )
+e060 6060 6060 f000  ( l )        0000 6cfe d6d6 c600  ( m )
+0000 f8cc cccc cc00  ( n )        0000 78cc cccc 7800  ( o )
+0000 f8cc ccf8 c0c0  ( p )        0000 7ccc cc7c 0c0e  ( q )
+0000 d8ec c0c0 c000  ( r )        0000 7ce0 781c f800  ( s )
+6060 f860 6060 3800  ( t )        0000 cccc cccc 7800  ( u )
+0000 cccc cc78 3000  ( v )        0000 c6d6 d6fe 6c00  ( w )
+0000 cc78 3078 cc00  ( x )        0000 cccc cc7c 0c78  ( y )
+0000 fc18 3060 fc00  ( z )        3060 60c0 6060 3000  ( { )
+8080 8080 8080 8000  ( | )        c060 6030 6060 c000  ( } )
 0000 62d6 8c00 0000  ( ~ )
-2514 2189 4125 1426  (   )
 
+@sprite
+  &blank         0000 0000 0000 0000
+  &full          1111 1111 1111 1111
+  &left_chevron  1030 70f0 7030 1000
+  &cursor        80c0 e0f0 f8e0 1000
+  &back          1830 60ff ff60 3018
+  &test_quarter  8f0f 0f0f 0f0f 0f8f   0000 0000 ffff ffff
+  &test_checker  55ab 55ab 55ab 55ab   0000 0000 ffff ffff
+  &cursor_pan    c381 2408 1024 81c3
+
+@tool_icon
+  &pan
+    0000 0000 0000 0000    0000 0010 387c d610    0000 0000 0000 0000
+    0206 0c1f 0c06 0200    1010 10ff 1010 1010    80c0 60f0 60c0 8000
+    0000 0000 0000 0000    d67c 3810 0000 0000    0000 0000 0000 0000
+  &zoom
+    0000 0001 0204 0808    0000 00f0 0874 120a    0000 0000 0000 0000
+    0808 0804 0201 0000    0a02 0204 0af7 0301    0000 0000 0000 80c0
+    0000 0000 0000 0000    0000 0000 0000 0000    e050 2000 0000 0000
+  &brush_1
+    0000 0000 0000 0000    0000 0814 1c1c 1c7f    0000 0000 0000 0000
+    0000 0000 0100 0000    7f00 7dff fe00 0008    0000 0000 0000 0000
+    0000 0000 0000 0000    1808 081c 0000 0000    0000 0000 0000 0000
+  &brush_2
+    0000 0000 0000 0000    0000 0814 1c1c 1c7f    0000 0000 0000 0000
+    0000 0000 0100 0000    7f00 7dff fe00 0018    0000 0000 0000 0000
+    0000 0000 0000 0000    2408 103c 0000 0000    0000 0000 0000 0000
+  &brush_3
+    0000 0000 0000 0000    0000 0814 1c1c 1c7f    0000 0000 0000 0000
+    0000 0000 0100 0000    7f00 7dff fe00 0018    0000 0000 0000 0000
+    0000 0000 0000 0000    2408 2418 0000 0000    0000 0000 0000 0000
+  &line
+    0000 0000 0000 0000    0000 0000 0001 0001    0000 0040 40f0 4040
+    0000 0000 0000 0005    0204 0810 2040 8000    0000 0000 0000 0000
+    041f 0404 0000 0000    0000 0000 0000 0000    0000 0000 0000 0000
+  &rect
+    0000 0008 083e 080b    0000 0000 0000 00ff    0000 0020 20f8 20a0
+    0302 0302 0302 030b    55aa 55aa 55aa 55ff    8080 8080 8080 80a0
+    083e 0808 0000 0000    0000 0000 0000 0000    20f8 2020 0000 0000
+  &fill
+    0000 0000 0000 0001    0000 0000 385f af53    0000 0000 0000 c0e0
+    0205 0a14 1008 0402    8100 0401 1224 4890    f0f0 b030 3030 2020
+    0100 0000 0000 0000    20c0 0000 0000 0000    2000 0000 0000 0000
+  &select
+    0000 0000 0d08 0008    0000 0000 5500 0000    0000 0000 6020 0020
+    0008 0008 0008 0008    0000 0000 0000 0000    0020 0020 0020 0020
+    0008 0d00 0000 0000    0000 5500 0000 0000    0020 6000 0000 0000
 
 @canvas_buffer
 (
   This label needs to be at the end of the
-  program, to ensure that there is enough
-  space for the largest possible canvas.
+  program, to ensure that there is enough space
+  to work with the largest possible image.
 )
+  ffa1 adad a1bf 81ff ff81 f5d1 f781 c1ff ffff 0000 ffff 0000

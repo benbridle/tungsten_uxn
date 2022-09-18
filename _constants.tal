@@ -1,0 +1,69 @@
+( ---------------------------------------------------------------------------- )
+(                       C O N S T A N T S   M A C R O S                        )
+
+%BUTTON_MASK_UP     { #10 }     %BUTTON_MASK_A      { #01 }
+%BUTTON_MASK_DOWN   { #20 }     %BUTTON_MASK_B      { #02 }
+%BUTTON_MASK_LEFT   { #40 }     %BUTTON_MASK_SELECT { #04 }
+%BUTTON_MASK_RIGHT  { #80 }     %BUTTON_MASK_START  { #08 }
+%BITMASK_1          { #01 }     %BITMASK_5          { #10 }
+%BITMASK_2          { #02 }     %BITMASK_6          { #20 }
+%BITMASK_3          { #04 }     %BITMASK_7          { #40 }
+%BITMASK_4          { #08 }     %BITMASK_8          { #80 }
+
+( Colour mappings for pixel colours, 1-bit sprite colours, and 2-bit sprite colours. )
+%COL_0 { #00 }      %COL_00    { #00 }   %COL_0012    { #80 }
+%COL_1 { #01 }      %COL_01    { #01 }   %COL_0123    { #81 }
+%COL_2 { #02 }      %COL_02    { #02 }   %COL_0231    { #82 }
+%COL_3 { #03 }      %COL_03    { #03 }   %COL_0312    { #83 }
+                    %COL_10    { #04 }   %COL_1012    { #84 }
+                    %COL_T1    { #05 }   %COL_T123    { #85 }
+                    %COL_12    { #06 }   %COL_1231    { #86 }
+                    %COL_13    { #07 }   %COL_1312    { #87 }
+                    %COL_20    { #08 }   %COL_2012    { #88 }
+                    %COL_21    { #09 }   %COL_2123    { #89 }
+                    %COL_T2    { #0a }   %COL_T231    { #8a }
+                    %COL_23    { #0b }   %COL_2312    { #8b }
+                    %COL_30    { #0c }   %COL_3012    { #8c }
+                    %COL_31    { #0d }   %COL_3123    { #8d }
+                    %COL_32    { #0e }   %COL_3231    { #8e }
+                    %COL_T3    { #0f }   %COL_T312    { #8f }
+
+( Flipped X )
+%COL_0_X { #10 }    %COL_00_X  { #10 }   %COL_0012_X  { #90 }
+%COL_1_X { #11 }    %COL_01_X  { #11 }   %COL_0123_X  { #91 }
+%COL_2_X { #12 }    %COL_02_X  { #12 }   %COL_0231_X  { #92 }
+%COL_3_X { #13 }    %COL_03_X  { #13 }   %COL_0312_X  { #93 }
+                    %COL_10_X  { #14 }   %COL_1012_X  { #94 }
+                    %COL_T1_X  { #15 }   %COL_T123_X  { #95 }
+                    %COL_12_X  { #16 }   %COL_1231_X  { #96 }
+                    %COL_13_X  { #17 }   %COL_1312_X  { #97 }
+                    %COL_20_X  { #18 }   %COL_2012_X  { #98 }
+                    %COL_21_X  { #19 }   %COL_2123_X  { #99 }
+                    %COL_T2_X  { #1a }   %COL_T231_X  { #9a }
+                    %COL_23_X  { #1b }   %COL_2312_X  { #9b }
+                    %COL_30_X  { #1c }   %COL_3012_X  { #9c }
+                    %COL_31_X  { #1d }   %COL_3123_X  { #9d }
+                    %COL_32_X  { #1e }   %COL_3231_X  { #9e }
+                    %COL_T3_X  { #1f }   %COL_T312_X  { #9f }
+
+
+( Colour mappings for pixel colours, 1-bit sprite colours, and 2-bit sprite colours. )
+%COL_0_FG { #40 }   %COL_00_FG { #40 }   %COL_0012_FG { #c0 }
+%COL_1_FG { #41 }   %COL_01_FG { #41 }   %COL_0123_FG { #c1 }
+%COL_2_FG { #42 }   %COL_02_FG { #42 }   %COL_0231_FG { #c2 }
+%COL_3_FG { #43 }   %COL_03_FG { #43 }   %COL_0312_FG { #c3 }
+                    %COL_10_FG { #44 }   %COL_1012_FG { #c4 }
+                    %COL_T1_FG { #45 }   %COL_T123_FG { #c5 }
+                    %COL_12_FG { #46 }   %COL_1231_FG { #c6 }
+                    %COL_13_FG { #47 }   %COL_1312_FG { #c7 }
+                    %COL_20_FG { #48 }   %COL_2012_FG { #c8 }
+                    %COL_21_FG { #49 }   %COL_2123_FG { #c9 }
+                    %COL_T2_FG { #4a }   %COL_T231_FG { #ca }
+                    %COL_23_FG { #4b }   %COL_2312_FG { #cb }
+                    %COL_30_FG { #4c }   %COL_3012_FG { #cc }
+                    %COL_31_FG { #4d }   %COL_3123_FG { #cd }
+                    %COL_32_FG { #4e }   %COL_3231_FG { #ce }
+                    %COL_T3_FG { #4f }   %COL_T312_FG { #cf }
+
+%TRUE  { #01 }
+%FALSE { #01 }
